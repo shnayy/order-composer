@@ -1,8 +1,5 @@
 const LAST_TWO_MINUTES = 2 * 60;
 
-// 特殊処理は不変のorderIdをキーにここへ追加する。
-// nextOrderWaitSeconds: 次のオーダーの待機時間を上書きする。
-// adjustEffectSeconds: 自分の効果時間をタイムライン上の位置に応じて調整する。
 export const ORDER_TIMELINE_RULES = {
   "16": {
     nextOrderWaitSeconds: 5,
