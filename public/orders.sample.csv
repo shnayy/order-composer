@@ -1,0 +1,5 @@
+id,name,category,waitSeconds,effectSeconds,icon,color,modifierType,modifierValue,description
+rapid-deploy,迅速展開,戦術,10,40,⇢,#55e6d2,next_wait_multiplier,0.5,次のオーダーの待機時間を50%短縮
+flame-command,烈火の号令,攻撃,20,100,炎,#ff6b57,none,0,前線の火力を一気に引き上げる
+flow-extension,時流延長,支援,15,50,∞,#9fa8ff,next_effect_multiplier,1.5,次のオーダーの効果時間を1.5倍に延長
+last-chapter,終幕の断章,特殊,5,180,終,#f5a3d3,effect_end_at,600,効果はタイムライン10:00で即終了
