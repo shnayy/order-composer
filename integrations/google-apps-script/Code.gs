@@ -1,5 +1,5 @@
-const SPREADSHEET_ID = "1D2VTd1wVTTUVFm2oUoWbKQaiTjLGqksJdGiF584TKkk";
-const IMAGE_FOLDER_ID = "1UKcbxOA2LZZ7YiUqNIQAvJzCXZPSM-9M";
+const SPREADSHEET_ID = "15OY1woERaiunJXR9kj13lvlId3ifOoBbWPL00KCzMl8";
+const IMAGE_FOLDER_ID = "1I2KoF104ON0q0JRslK-dVAAXklP_kLkB";
 const HEADERS = ["orderId", "imageFileName", "name", "waitSeconds", "effectSeconds", "categoryId"];
 
 function doGet() {
@@ -117,6 +117,15 @@ function trashFiles_(fileName) {
 function extensionForMime_(mime) {
   const extensions = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif" };
   return extensions[mime] || "png";
+}
+
+function setupInitialImages_() {
+  const files = DriveApp.getFolderById(IMAGE_FOLDER_ID).getFiles();
+  while (files.hasNext()) {
+    try {
+      files.next().setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    } catch (_) {}
+  }
 }
 
 function json_(value) {
