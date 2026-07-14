@@ -39,6 +39,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build:github
         env:
+          NEXT_PUBLIC_ORDERS_API_URL: ${{ vars.NEXT_PUBLIC_ORDERS_API_URL }}
           NEXT_PUBLIC_ORDERS_CSV_URL: ${{ vars.NEXT_PUBLIC_ORDERS_CSV_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
