@@ -110,3 +110,28 @@ test("shows an empty timeline and highlights adjusted times", async () => {
   assert.match(css, /\.time-value\.is-red/);
   assert.match(css, /\.time-value\.is-blue/);
 });
+
+test("blocks interaction while loading and reuses cached orders", async () => {
+  const [page, admin, orders, css, appsScript] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+    readFile(new URL("../integrations/google-apps-script/Code.gs", import.meta.url), "utf8"),
+  ]);
+  for (const source of [page, admin]) {
+    assert.match(source, /loadCachedOrders\(\)/);
+    assert.match(source, /loading && <LoadingScreen \/>/);
+    assert.match(source, /inert={loading \|\| undefined}/);
+    assert.match(source, />読み込み中</);
+  }
+  assert.match(orders, /order-composer:orders:v1/);
+  assert.match(orders, /window\.localStorage\.setItem/);
+  assert.match(orders, /cachedOrders\.length > 0 \? cachedOrders : DEMO_ORDERS/);
+  assert.match(admin, /setOrders\(result\.orders\)/);
+  assert.doesNotMatch(admin, /await refresh\(\)/);
+  assert.match(css, /\.loading-screen[^}]+position:\s*fixed[^}]+z-index:\s*1000/s);
+  assert.match(appsScript, /CacheService\.getScriptCache\(\)/);
+  assert.match(appsScript, /function imageUrls_\(\)/);
+  assert.doesNotMatch(appsScript, /function imageUrl_\(fileName\)/);
+});
