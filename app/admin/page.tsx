@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
-  DataSource,
   ORDER_CATEGORY_OPTIONS,
   OrderRecord,
   deleteOrderRemote,
@@ -50,7 +49,6 @@ function AdminImage({ order }: { order: OrderRecord }) {
 
 export default function AdminPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
-  const [source, setSource] = useState<DataSource>("demo");
   const [form, setForm] = useState<FormState | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -61,7 +59,6 @@ export default function AdminPage() {
   const refresh = async () => {
     const result = await loadOrders();
     setOrders(result.orders);
-    setSource(result.source);
   };
 
   useEffect(() => {
@@ -140,7 +137,6 @@ export default function AdminPage() {
           if (form.mode === "add") return [...current, record];
           return current.map((order) => (order.orderId === form.originalId ? record : order));
         });
-        setSource("demo");
         setMessage("プレビューに反映しました。API接続前なので再読み込みすると元に戻ります");
         setForm(null);
         setImageFile(null);
@@ -166,7 +162,6 @@ export default function AdminPage() {
         await refresh();
       } else {
         setOrders((current) => current.filter((order) => order.orderId !== deleteTarget.orderId));
-        setSource("demo");
       }
       setDeleteTarget(null);
     } catch (error) {
@@ -175,12 +170,6 @@ export default function AdminPage() {
       setBusy(false);
     }
   };
-
-  const sourceText = source === "apps-script"
-    ? "スプレッドシート接続中"
-    : source === "error"
-      ? "スプレッドシート接続エラー"
-      : "";
 
   return (
     <main className="admin-page">
@@ -191,10 +180,7 @@ export default function AdminPage() {
 
       <section className="admin-content">
         <div className="admin-title-row">
-          <div>
-            <h1>オーダー管理</h1>
-            {sourceText && <p className={`connection-state connection-state--${source}`}>{sourceText}</p>}
-          </div>
+          <h1>オーダー管理</h1>
         </div>
 
         {message && !form && <p className="admin-message">{message}</p>}

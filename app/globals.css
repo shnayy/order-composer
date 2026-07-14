@@ -195,9 +195,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .admin-content { width: min(1180px, calc(100% - 28px)); margin: 0 auto; padding: 24px 0 50px; }
 .admin-title-row { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 14px; }
 .admin-title-row h1 { margin: 0; font-size: 22px; }
-.connection-state { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
-.connection-state--apps-script { color: #26734d; }
-.connection-state--error { color: var(--danger); }
 .admin-message, .form-message { padding: 9px 10px; border: 1px solid #d6b98c; background: #fff8e8; color: #6d4c1f; font-size: 11px; }
 .order-table-wrap { overflow-x: auto; border: 1px solid var(--border); background: #fff; }
 .order-table { width: 100%; min-width: 700px; border-collapse: collapse; font-size: 12px; }
