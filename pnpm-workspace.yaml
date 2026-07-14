@@ -1,0 +1,7 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
+storeDir: work/pnpm-store-fresh
+virtualStoreDir: work/vstore
