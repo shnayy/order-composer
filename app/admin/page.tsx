@@ -16,8 +16,7 @@ import {
 
 type FormState = {
   mode: "add" | "edit";
-  originalId: string;
-  orderId: string;
+  originalId: number | null;
   name: string;
   waitSeconds: string;
   effectSeconds: string;
@@ -28,8 +27,7 @@ type FormState = {
 
 const EMPTY_FORM: FormState = {
   mode: "add",
-  originalId: "",
-  orderId: "",
+  originalId: null,
   name: "",
   waitSeconds: "0",
   effectSeconds: "0",
@@ -39,11 +37,7 @@ const EMPTY_FORM: FormState = {
 };
 
 function getNextOrderId(orders: OrderRecord[]) {
-  const highestId = orders.reduce((highest, order) => {
-    if (!/^\d+$/.test(order.orderId)) return highest;
-    return Math.max(highest, Number(order.orderId));
-  }, 0);
-  return String(highestId + 1);
+  return orders.reduce((highest, order) => Math.max(highest, order.orderId), 0) + 1;
 }
 
 function AdminImage({ order }: { order: OrderRecord }) {
@@ -85,7 +79,6 @@ export default function AdminPage() {
     setForm({
       mode: "edit",
       originalId: order.orderId,
-      orderId: order.orderId,
       name: order.name,
       waitSeconds: String(order.waitSeconds),
       effectSeconds: String(order.effectSeconds),
@@ -123,6 +116,7 @@ export default function AdminPage() {
       const imageData = imageFile ? await fileToDataUrl(imageFile) : "";
       const extension = imageFile?.name.split(".").pop()?.toLowerCase() || "";
       const orderId = form.mode === "add" ? getNextOrderId(orders) : form.originalId;
+      if (orderId === null) throw new Error("更新対象が見つかりません");
       const record: OrderRecord = {
         orderId,
         imageFileName: imageFile ? `${orderId}.${extension}` : form.imageFileName,
@@ -135,7 +129,7 @@ export default function AdminPage() {
 
       if (isApiConfigured()) {
         await saveOrderRemote({
-          originalId: form.originalId || undefined,
+          originalId: form.originalId ?? undefined,
           order: record,
           imageData: imageData || undefined,
           imageMime: imageFile?.type || undefined,
@@ -186,7 +180,7 @@ export default function AdminPage() {
     ? "スプレッドシート接続中"
     : source === "error"
       ? "スプレッドシート接続エラー"
-      : "未接続・プレビューデータ";
+      : "";
 
   return (
     <main className="admin-page">
@@ -199,7 +193,7 @@ export default function AdminPage() {
         <div className="admin-title-row">
           <div>
             <h1>オーダー管理</h1>
-            <p className={`connection-state connection-state--${source}`}>{sourceText}</p>
+            {sourceText && <p className={`connection-state connection-state--${source}`}>{sourceText}</p>}
           </div>
         </div>
 
@@ -209,7 +203,6 @@ export default function AdminPage() {
           <table className="order-table">
             <thead>
               <tr>
-                <th>オーダーID</th>
                 <th>画像</th>
                 <th>オーダー名</th>
                 <th>待機時間</th>
@@ -221,7 +214,6 @@ export default function AdminPage() {
             <tbody>
               {orders.map((order) => (
                 <tr key={order.orderId}>
-                  <td><code>{order.orderId}</code></td>
                   <td><AdminImage order={order} /></td>
                   <td>{order.name}</td>
                   <td>{order.waitSeconds}s</td>
@@ -249,15 +241,6 @@ export default function AdminPage() {
             </div>
             <form onSubmit={submitForm}>
               <label>
-                <span>オーダーID</span>
-                {form.mode === "add" ? (
-                  <div className="readonly-id-field">追加時に自動採番</div>
-                ) : (
-                  <input value={form.orderId} readOnly aria-readonly="true" />
-                )}
-                <small>連番で自動的に割り振られ、追加後は変更できません</small>
-              </label>
-              <label>
                 <span>画像</span>
                 <input
                   type="file"
@@ -268,7 +251,7 @@ export default function AdminPage() {
                     if (file) setImagePreview(URL.createObjectURL(file));
                   }}
                 />
-                <small>保存名は自動で「オーダーID.拡張子」になります（最大2MB）</small>
+                <small>画像の保存名は自動で設定されます（最大2MB）</small>
               </label>
               {imagePreview && <img className="form-image-preview" src={imagePreview} alt="アップロード画像のプレビュー" />}
               <label>
@@ -286,10 +269,10 @@ export default function AdminPage() {
                 </label>
               </div>
               <label>
-                <span>カテゴリID</span>
+                <span>カテゴリ</span>
                 <select value={form.categoryId} onChange={(event) => setForm({ ...form, categoryId: event.target.value })}>
                   {ORDER_CATEGORY_OPTIONS.map((option) => (
-                    <option key={option.id} value={option.id}>{option.label}（{option.id}）</option>
+                    <option key={option.id} value={option.id}>{option.label}</option>
                   ))}
                 </select>
               </label>
