@@ -27,6 +27,8 @@ test("keeps waits repeatable and exposes timeline copy actions", async () => {
   assert.match(page, /repeatable = order\.categoryId === "wait"/);
   assert.match(page, /画像コピー/);
   assert.match(page, /テキストコピー/);
+  assert.match(page, /navigator\.clipboard\.write\(\[new ClipboardItem/);
+  assert.doesNotMatch(page, /link\.download|URL\.createObjectURL/);
   assert.match(page, /\$\{formatTimelinePoint\(item\.startsAt\)\} \[\$\{item\.order\.name\}\]/);
   assert.doesNotMatch(page, /左のリストから追加してください/);
 });
