@@ -89,6 +89,7 @@ test("uses immutable automatic numeric order ids", async () => {
   ]);
   assert.match(admin, /Math\.max\(highest, order\.orderId\)/);
   assert.doesNotMatch(admin, />オーダーID</);
+  assert.doesNotMatch(admin, /スプレッドシート接続中|connection-state/);
   assert.doesNotMatch(admin, /form\.orderId/);
   assert.match(admin, /<span>カテゴリ<\/span>/);
   assert.doesNotMatch(admin, /option\.label}（{option\.id}/);
