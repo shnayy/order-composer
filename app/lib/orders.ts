@@ -1,3 +1,5 @@
+import { SAMPLE_IMAGE_URLS } from "./sample-images.mjs";
+
 export type OrderRecord = {
   orderId: string;
   imageFileName: string;
@@ -24,10 +26,8 @@ export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
   (option) => option.id !== "all" && option.id !== "wait",
 );
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-
 function sampleImageUrl(orderId: string) {
-  return `${SITE_URL ?? ""}/order-images/${orderId}.png`;
+  return SAMPLE_IMAGE_URLS[orderId as keyof typeof SAMPLE_IMAGE_URLS];
 }
 
 export const DEMO_ORDERS: OrderRecord[] = [
@@ -62,14 +62,15 @@ export function isApiConfigured() {
 }
 
 function normalizeOrder(value: Record<string, unknown>): OrderRecord | null {
+  const orderId = String(value.orderId ?? value.id ?? "").trim();
   const order: OrderRecord = {
-    orderId: String(value.orderId ?? value.id ?? "").trim(),
+    orderId,
     imageFileName: String(value.imageFileName ?? "").trim(),
     name: String(value.name ?? "").trim(),
     waitSeconds: Number(value.waitSeconds),
     effectSeconds: Number(value.effectSeconds),
     categoryId: String(value.categoryId ?? value.category ?? "other").trim(),
-    imageUrl: value.imageUrl ? String(value.imageUrl) : undefined,
+    imageUrl: sampleImageUrl(orderId) ?? (value.imageUrl ? String(value.imageUrl) : undefined),
   };
   if (!order.orderId || !order.name || !Number.isFinite(order.waitSeconds) || !Number.isFinite(order.effectSeconds)) return null;
   return order;
