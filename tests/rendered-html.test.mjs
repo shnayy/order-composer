@@ -74,8 +74,25 @@ test("uses immutable automatic numeric order ids", async () => {
     readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../integrations/google-apps-script/Code.gs", import.meta.url), "utf8"),
   ]);
-  assert.match(admin, /追加時に自動採番/);
-  assert.match(admin, /readOnly aria-readonly="true"/);
+  assert.match(admin, /Math\.max\(highest, order\.orderId\)/);
+  assert.doesNotMatch(admin, />オーダーID</);
+  assert.doesNotMatch(admin, /form\.orderId/);
+  assert.match(admin, /<span>カテゴリ<\/span>/);
+  assert.doesNotMatch(admin, /option\.label}（{option\.id}/);
   assert.match(appsScript, /nextOrderId_\(values\)/);
   assert.match(appsScript, /const orderId = isEdit \? String\(values\[currentIndex\]\[0\]\) : nextOrderId_\(values\)/);
+});
+
+test("shows an empty timeline and highlights adjusted times", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  assert.doesNotMatch(page, />実行順</);
+  assert.match(page, /className="timeline-empty"/);
+  assert.match(page, /timeValueClass\("wait"/);
+  assert.match(page, /timeValueClass\("effect"/);
+  assert.match(css, /\.timeline-empty[^}]+border:\s*1px dashed/s);
+  assert.match(css, /\.time-value\.is-red/);
+  assert.match(css, /\.time-value\.is-blue/);
 });

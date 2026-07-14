@@ -1,7 +1,7 @@
 import { SAMPLE_IMAGE_URLS } from "./sample-images.mjs";
 
 export type OrderRecord = {
-  orderId: string;
+  orderId: number;
   imageFileName: string;
   name: string;
   waitSeconds: number;
@@ -26,35 +26,35 @@ export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
   (option) => option.id !== "all" && option.id !== "wait",
 );
 
-function sampleImageUrl(orderId: string) {
-  return SAMPLE_IMAGE_URLS[orderId as keyof typeof SAMPLE_IMAGE_URLS];
+function sampleImageUrl(orderId: number) {
+  return SAMPLE_IMAGE_URLS[String(orderId) as keyof typeof SAMPLE_IMAGE_URLS];
 }
 
 export const DEMO_ORDERS: OrderRecord[] = [
-  { orderId: "1", imageFileName: "1.png", imageUrl: sampleImageUrl("1"), name: "火属性強化", waitSeconds: 20, effectSeconds: 100, categoryId: "attribute" },
-  { orderId: "2", imageFileName: "2.png", imageUrl: sampleImageUrl("2"), name: "水属性強化", waitSeconds: 15, effectSeconds: 90, categoryId: "attribute" },
-  { orderId: "3", imageFileName: "3.png", imageUrl: sampleImageUrl("3"), name: "風属性強化", waitSeconds: 25, effectSeconds: 110, categoryId: "attribute" },
-  { orderId: "4", imageFileName: "4.png", imageUrl: sampleImageUrl("4"), name: "発動率上昇", waitSeconds: 10, effectSeconds: 60, categoryId: "activation" },
-  { orderId: "5", imageFileName: "5.png", imageUrl: sampleImageUrl("5"), name: "連続発動", waitSeconds: 20, effectSeconds: 80, categoryId: "activation" },
-  { orderId: "6", imageFileName: "6.png", imageUrl: sampleImageUrl("6"), name: "確定発動", waitSeconds: 30, effectSeconds: 45, categoryId: "activation" },
-  { orderId: "7", imageFileName: "7.png", imageUrl: sampleImageUrl("7"), name: "MP回復", waitSeconds: 30, effectSeconds: 90, categoryId: "mp" },
-  { orderId: "8", imageFileName: "8.png", imageUrl: sampleImageUrl("8"), name: "MP消費軽減", waitSeconds: 15, effectSeconds: 120, categoryId: "mp" },
-  { orderId: "9", imageFileName: "9.png", imageUrl: sampleImageUrl("9"), name: "MP上限増加", waitSeconds: 20, effectSeconds: 150, categoryId: "mp" },
-  { orderId: "10", imageFileName: "10.png", imageUrl: sampleImageUrl("10"), name: "盾強化", waitSeconds: 20, effectSeconds: 120, categoryId: "shield" },
-  { orderId: "11", imageFileName: "11.png", imageUrl: sampleImageUrl("11"), name: "全体防御", waitSeconds: 35, effectSeconds: 90, categoryId: "shield" },
-  { orderId: "12", imageFileName: "12.png", imageUrl: sampleImageUrl("12"), name: "反射障壁", waitSeconds: 25, effectSeconds: 75, categoryId: "shield" },
-  { orderId: "13", imageFileName: "13.png", imageUrl: sampleImageUrl("13"), name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
-  { orderId: "14", imageFileName: "14.png", imageUrl: sampleImageUrl("14"), name: "クールダウン短縮", waitSeconds: 20, effectSeconds: 100, categoryId: "other" },
-  { orderId: "15", imageFileName: "15.png", imageUrl: sampleImageUrl("15"), name: "効果延長", waitSeconds: 10, effectSeconds: 80, categoryId: "other" },
-  { orderId: "16", imageFileName: "16.png", imageUrl: sampleImageUrl("16"), name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
-  { orderId: "17", imageFileName: "17.png", imageUrl: sampleImageUrl("17"), name: "大天光の覚醒妨害", waitSeconds: 20, effectSeconds: 90, categoryId: "other" },
+  { orderId: 1, imageFileName: "1.png", imageUrl: sampleImageUrl(1), name: "火属性強化", waitSeconds: 20, effectSeconds: 100, categoryId: "attribute" },
+  { orderId: 2, imageFileName: "2.png", imageUrl: sampleImageUrl(2), name: "水属性強化", waitSeconds: 15, effectSeconds: 90, categoryId: "attribute" },
+  { orderId: 3, imageFileName: "3.png", imageUrl: sampleImageUrl(3), name: "風属性強化", waitSeconds: 25, effectSeconds: 110, categoryId: "attribute" },
+  { orderId: 4, imageFileName: "4.png", imageUrl: sampleImageUrl(4), name: "発動率上昇", waitSeconds: 10, effectSeconds: 60, categoryId: "activation" },
+  { orderId: 5, imageFileName: "5.png", imageUrl: sampleImageUrl(5), name: "連続発動", waitSeconds: 20, effectSeconds: 80, categoryId: "activation" },
+  { orderId: 6, imageFileName: "6.png", imageUrl: sampleImageUrl(6), name: "確定発動", waitSeconds: 30, effectSeconds: 45, categoryId: "activation" },
+  { orderId: 7, imageFileName: "7.png", imageUrl: sampleImageUrl(7), name: "MP回復", waitSeconds: 30, effectSeconds: 90, categoryId: "mp" },
+  { orderId: 8, imageFileName: "8.png", imageUrl: sampleImageUrl(8), name: "MP消費軽減", waitSeconds: 15, effectSeconds: 120, categoryId: "mp" },
+  { orderId: 9, imageFileName: "9.png", imageUrl: sampleImageUrl(9), name: "MP上限増加", waitSeconds: 20, effectSeconds: 150, categoryId: "mp" },
+  { orderId: 10, imageFileName: "10.png", imageUrl: sampleImageUrl(10), name: "盾強化", waitSeconds: 20, effectSeconds: 120, categoryId: "shield" },
+  { orderId: 11, imageFileName: "11.png", imageUrl: sampleImageUrl(11), name: "全体防御", waitSeconds: 35, effectSeconds: 90, categoryId: "shield" },
+  { orderId: 12, imageFileName: "12.png", imageUrl: sampleImageUrl(12), name: "反射障壁", waitSeconds: 25, effectSeconds: 75, categoryId: "shield" },
+  { orderId: 13, imageFileName: "13.png", imageUrl: sampleImageUrl(13), name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
+  { orderId: 14, imageFileName: "14.png", imageUrl: sampleImageUrl(14), name: "クールダウン短縮", waitSeconds: 20, effectSeconds: 100, categoryId: "other" },
+  { orderId: 15, imageFileName: "15.png", imageUrl: sampleImageUrl(15), name: "効果延長", waitSeconds: 10, effectSeconds: 80, categoryId: "other" },
+  { orderId: 16, imageFileName: "16.png", imageUrl: sampleImageUrl(16), name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
+  { orderId: 17, imageFileName: "17.png", imageUrl: sampleImageUrl(17), name: "大天光の覚醒妨害", waitSeconds: 20, effectSeconds: 90, categoryId: "other" },
 ];
 
 const API_URL = process.env.NEXT_PUBLIC_ORDERS_API_URL?.trim();
 const CSV_URL = process.env.NEXT_PUBLIC_ORDERS_CSV_URL?.trim();
 
 export function orderCategoryLabel(categoryId: string) {
-  return CATEGORY_OPTIONS.find((option) => option.id === categoryId)?.label ?? categoryId;
+  return CATEGORY_OPTIONS.find((option) => option.id === categoryId)?.label ?? "その他";
 }
 
 export function isApiConfigured() {
@@ -62,7 +62,7 @@ export function isApiConfigured() {
 }
 
 function normalizeOrder(value: Record<string, unknown>): OrderRecord | null {
-  const orderId = String(value.orderId ?? value.id ?? "").trim();
+  const orderId = Number(value.orderId ?? value.id);
   const order: OrderRecord = {
     orderId,
     imageFileName: String(value.imageFileName ?? "").trim(),
@@ -72,7 +72,7 @@ function normalizeOrder(value: Record<string, unknown>): OrderRecord | null {
     categoryId: String(value.categoryId ?? value.category ?? "other").trim(),
     imageUrl: sampleImageUrl(orderId) ?? (value.imageUrl ? String(value.imageUrl) : undefined),
   };
-  if (!order.orderId || !order.name || !Number.isFinite(order.waitSeconds) || !Number.isFinite(order.effectSeconds)) return null;
+  if (!Number.isSafeInteger(order.orderId) || order.orderId <= 0 || !order.name || !Number.isFinite(order.waitSeconds) || !Number.isFinite(order.effectSeconds)) return null;
   return order;
 }
 
@@ -157,7 +157,7 @@ async function postApi(payload: Record<string, unknown>) {
 }
 
 export async function saveOrderRemote(payload: {
-  originalId?: string;
+  originalId?: number;
   order: OrderRecord;
   imageData?: string;
   imageMime?: string;
@@ -165,7 +165,7 @@ export async function saveOrderRemote(payload: {
   return postApi({ action: "save", ...payload });
 }
 
-export async function deleteOrderRemote(orderId: string, imageFileName: string) {
+export async function deleteOrderRemote(orderId: number, imageFileName: string) {
   return postApi({ action: "delete", orderId, imageFileName });
 }
 
