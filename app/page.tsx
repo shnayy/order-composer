@@ -14,6 +14,7 @@ import {
   loadOrders,
   orderCategoryLabel,
 } from "./lib/orders";
+import { calculateTimeline } from "./lib/timeline-rules.mjs";
 
 const TIMELINE_SECONDS = 15 * 60;
 
@@ -26,6 +27,8 @@ type CalculatedItem = TimelineItem & {
   startsAt: number;
   endsAt: number;
   remaining: number;
+  waitSeconds: number;
+  effectSeconds: number;
 };
 
 const WAIT_ORDERS: OrderRecord[] = [
@@ -131,12 +134,7 @@ export default function Home() {
   );
 
   const calculated = useMemo(() => {
-    let elapsed = 0;
-    return timeline.map<CalculatedItem>((item) => {
-      const startsAt = TIMELINE_SECONDS - elapsed;
-      elapsed += item.order.waitSeconds + item.order.effectSeconds;
-      return { ...item, startsAt, endsAt: elapsed, remaining: TIMELINE_SECONDS - elapsed };
-    });
+    return calculateTimeline(timeline, TIMELINE_SECONDS) as CalculatedItem[];
   }, [timeline]);
 
   const remaining = TIMELINE_SECONDS - (calculated.at(-1)?.endsAt ?? 0);
@@ -188,11 +186,12 @@ export default function Home() {
   };
 
   const createTimelineImage = async () => {
-      const width = 560;
+      const width = 640;
       const padding = 24;
-      const cardHeight = 72;
-      const gap = 27;
-      const footerHeight = 28;
+      const cardWidth = 520;
+      const cardHeight = 64;
+      const gap = 2;
+      const footerHeight = 26;
       const height = padding * 2 + calculated.length * cardHeight + Math.max(0, calculated.length - 1) * gap + footerHeight;
       const scale = 2;
       const canvas = document.createElement("canvas");
@@ -210,12 +209,12 @@ export default function Home() {
         context.fillStyle = "#ffffff";
         context.strokeStyle = "#d1d5db";
         context.lineWidth = 1;
-        context.fillRect(padding, y, width - padding * 2, cardHeight);
-        context.strokeRect(padding + 0.5, y + 0.5, width - padding * 2 - 1, cardHeight - 1);
+        context.fillRect(padding, y, cardWidth, cardHeight);
+        context.strokeRect(padding + 0.5, y + 0.5, cardWidth - 1, cardHeight - 1);
 
         const imageX = padding + 10;
         const imageY = y + 10;
-        const imageSize = 52;
+        const imageSize = 44;
         const image = images[index];
         if (image) {
           const cropSize = Math.min(image.naturalWidth, image.naturalHeight);
@@ -236,16 +235,16 @@ export default function Home() {
         context.textBaseline = "alphabetic";
         context.fillStyle = "#1f2937";
         context.font = "700 15px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
-        context.fillText(item.order.name, imageX + imageSize + 12, y + 31);
+        context.fillText(item.order.name, imageX + imageSize + 12, y + 28, cardWidth - imageSize - 34);
         context.fillStyle = "#4b5563";
         context.font = "11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
-        const detail = `待機 ${item.order.waitSeconds}s${item.order.effectSeconds > 0 ? ` / 効果 ${item.order.effectSeconds}s` : ""}`;
-        context.fillText(detail, imageX + imageSize + 12, y + 52);
+        const detail = `待機 ${item.waitSeconds}s${item.effectSeconds > 0 ? ` / 効果 ${item.effectSeconds}s` : ""}`;
+        context.fillText(detail, imageX + imageSize + 12, y + 48);
 
         context.textAlign = "right";
         context.fillStyle = item.remaining < 0 ? "#b42318" : "#4b5563";
         context.font = "11px ui-monospace, SFMono-Regular, Consolas, monospace";
-        context.fillText(formatRemaining(item.remaining), width - padding, y + cardHeight + 16);
+        context.fillText(formatRemaining(item.remaining), width - padding, y + cardHeight - 4);
       });
 
       context.textAlign = "right";
@@ -403,8 +402,8 @@ export default function Home() {
                   <div className="timeline-copy">
                     <h3>{item.order.name}</h3>
                     <p>
-                      待機 {item.order.waitSeconds}s
-                      {item.order.effectSeconds > 0 && ` / 効果 ${item.order.effectSeconds}s`}
+                      待機 {item.waitSeconds}s
+                      {item.effectSeconds > 0 && ` / 効果 ${item.effectSeconds}s`}
                     </p>
                     {item.order.categoryId !== "wait" && (
                       <small>{orderCategoryLabel(item.order.categoryId)}</small>
