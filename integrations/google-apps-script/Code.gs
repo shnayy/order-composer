@@ -1,6 +1,8 @@
 const SPREADSHEET_ID = "15OY1woERaiunJXR9kj13lvlId3ifOoBbWPL00KCzMl8";
 const IMAGE_FOLDER_ID = "1I2KoF104ON0q0JRslK-dVAAXklP_kLkB";
 const HEADERS = ["orderId", "imageFileName", "name", "waitSeconds", "effectSeconds", "categoryId"];
+const ORDERS_CACHE_KEY = "order-composer-orders-v1";
+const ORDERS_CACHE_SECONDS = 300;
 
 function doGet() {
   return json_({ ok: true, orders: getOrders_() });
@@ -15,6 +17,7 @@ function doPost(event) {
     if (payload.action === "save") orderId = saveOrder_(payload);
     else if (payload.action === "delete") deleteOrder_(payload);
     else throw new Error("Unknown action");
+    clearOrdersCache_();
     return json_({ ok: true, orderId, orders: getOrders_() });
   } catch (error) {
     return json_({ ok: false, error: String(error.message || error) });
@@ -28,18 +31,56 @@ function getSheet_() {
 }
 
 function getOrders_() {
+  const cachedOrders = getCachedOrders_();
+  if (cachedOrders) return cachedOrders;
+
   const sheet = getSheet_();
   const values = sheet.getDataRange().getValues();
-  if (values.length < 2) return [];
-  return values.slice(1).filter(row => row[0]).map(row => ({
+  const rows = values.slice(1).filter(row => row[0]);
+  const imageUrls = imageUrls_();
+  const orders = rows.map(row => ({
     orderId: String(row[0]),
     imageFileName: String(row[1] || ""),
     name: String(row[2] || ""),
     waitSeconds: Number(row[3] || 0),
     effectSeconds: Number(row[4] || 0),
     categoryId: String(row[5] || "other"),
-    imageUrl: row[1] ? imageUrl_(String(row[1])) : "",
+    imageUrl: row[1] ? imageUrls[String(row[1])] || "" : "",
   }));
+  putOrdersCache_(orders);
+  return orders;
+}
+
+function getCachedOrders_() {
+  try {
+    const value = CacheService.getScriptCache().get(ORDERS_CACHE_KEY);
+    return value ? JSON.parse(value) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function putOrdersCache_(orders) {
+  try {
+    CacheService.getScriptCache().put(ORDERS_CACHE_KEY, JSON.stringify(orders), ORDERS_CACHE_SECONDS);
+  } catch (_) {}
+}
+
+function clearOrdersCache_() {
+  try {
+    CacheService.getScriptCache().remove(ORDERS_CACHE_KEY);
+  } catch (_) {}
+}
+
+function imageUrls_() {
+  const urls = {};
+  const files = DriveApp.getFolderById(IMAGE_FOLDER_ID).getFiles();
+  while (files.hasNext()) {
+    const file = files.next();
+    const fileName = file.getName();
+    if (!urls[fileName]) urls[fileName] = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+  }
+  return urls;
 }
 
 function saveOrder_(payload) {
@@ -102,11 +143,6 @@ function deleteOrder_(payload) {
     if (imageFileName) trashFiles_(imageFileName);
     sheet.deleteRow(index + 1);
   }
-}
-
-function imageUrl_(fileName) {
-  const files = DriveApp.getFolderById(IMAGE_FOLDER_ID).getFilesByName(fileName);
-  return files.hasNext() ? `https://drive.google.com/uc?export=view&id=${files.next().getId()}` : "";
 }
 
 function trashFiles_(fileName) {
