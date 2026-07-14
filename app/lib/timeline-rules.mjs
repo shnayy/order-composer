@@ -26,8 +26,9 @@ export function calculateTimeline(items, totalSeconds = 15 * 60) {
     const rule = ORDER_TIMELINE_RULES[item.order.orderId];
     const baseWaitSeconds = nonNegativeSeconds(item.order.waitSeconds);
     const baseEffectSeconds = nonNegativeSeconds(item.order.effectSeconds);
-    const waitSeconds = nonNegativeSeconds(nextWaitSeconds ?? baseWaitSeconds);
-    nextWaitSeconds = null;
+    const isWaitItem = item.order.categoryId === "wait";
+    const waitSeconds = nonNegativeSeconds(isWaitItem ? baseWaitSeconds : (nextWaitSeconds ?? baseWaitSeconds));
+    if (!isWaitItem) nextWaitSeconds = null;
 
     const adjustedEffectSeconds = rule?.adjustEffectSeconds?.({
       effectSeconds: baseEffectSeconds,

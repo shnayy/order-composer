@@ -32,9 +32,9 @@ type CalculatedItem = TimelineItem & {
 };
 
 const WAIT_ORDERS: OrderRecord[] = [
-  { orderId: -10, imageFileName: "", name: "10秒待機", waitSeconds: 10, effectSeconds: 0, categoryId: "wait" },
-  { orderId: -20, imageFileName: "", name: "20秒待機", waitSeconds: 20, effectSeconds: 0, categoryId: "wait" },
-  { orderId: -30, imageFileName: "", name: "30秒待機", waitSeconds: 30, effectSeconds: 0, categoryId: "wait" },
+  { orderId: -10, imageFileName: "", name: "10秒待機", waitSeconds: 0, effectSeconds: 10, categoryId: "wait" },
+  { orderId: -20, imageFileName: "", name: "20秒待機", waitSeconds: 0, effectSeconds: 20, categoryId: "wait" },
+  { orderId: -30, imageFileName: "", name: "30秒待機", waitSeconds: 0, effectSeconds: 30, categoryId: "wait" },
 ];
 
 function timeValueClass(kind: "wait" | "effect", current: number, original: number) {
@@ -85,7 +85,7 @@ function OrderImage({ order, compact = false }: { order: OrderRecord; compact?: 
 
   return (
     <span className={`order-image order-image--empty ${compact ? "order-image--compact" : ""}`}>
-      {order.categoryId === "wait" ? `${order.waitSeconds}s` : order.name.slice(0, 1)}
+      {order.categoryId === "wait" ? `${order.effectSeconds}s` : order.name.slice(0, 1)}
     </span>
   );
 }
@@ -169,8 +169,8 @@ export default function Home() {
       orderId: -1,
       imageFileName: "",
       name: `${customSeconds}秒待機`,
-      waitSeconds: customSeconds,
-      effectSeconds: 0,
+      waitSeconds: 0,
+      effectSeconds: customSeconds,
       categoryId: "wait",
     });
   };
@@ -186,6 +186,7 @@ export default function Home() {
 
   const copyTimelineText = async () => {
     const text = calculated
+      .filter((item) => item.order.categoryId !== "wait")
       .map((item) => `${formatTimelinePoint(item.startsAt)} [${item.order.name}]`)
       .join("\n");
     try {
@@ -241,7 +242,7 @@ export default function Home() {
           context.font = "700 13px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
           context.textAlign = "center";
           context.textBaseline = "middle";
-          context.fillText(item.order.categoryId === "wait" ? `${item.order.waitSeconds}s` : item.order.name.slice(0, 1), imageX + imageSize / 2, imageY + imageSize / 2);
+          context.fillText(item.order.categoryId === "wait" ? `${item.order.effectSeconds}s` : item.order.name.slice(0, 1), imageX + imageSize / 2, imageY + imageSize / 2);
         }
 
         context.textAlign = "left";
@@ -249,19 +250,21 @@ export default function Home() {
         context.fillStyle = "#1f2937";
         context.font = "700 15px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
         context.fillText(item.order.name, imageX + imageSize + 12, y + 28, cardWidth - imageSize - 34);
-        let detailX = imageX + imageSize + 12;
-        const detailY = y + 48;
-        const drawDetail = (text: string, color = "#4b5563", changed = false) => {
-          context.fillStyle = color;
-          context.font = `${changed ? "700 " : ""}11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif`;
-          context.fillText(text, detailX, detailY);
-          detailX += context.measureText(text).width;
-        };
-        drawDetail("待機 ");
-        drawDetail(`${item.waitSeconds}s`, timeValueColor("wait", item.waitSeconds, item.order.waitSeconds), item.waitSeconds !== item.order.waitSeconds);
-        if (item.order.effectSeconds > 0 || item.effectSeconds > 0) {
-          drawDetail(" / 効果 ");
-          drawDetail(`${item.effectSeconds}s`, timeValueColor("effect", item.effectSeconds, item.order.effectSeconds), item.effectSeconds !== item.order.effectSeconds);
+        if (item.order.categoryId !== "wait") {
+          let detailX = imageX + imageSize + 12;
+          const detailY = y + 48;
+          const drawDetail = (text: string, color = "#4b5563", changed = false) => {
+            context.fillStyle = color;
+            context.font = `${changed ? "700 " : ""}11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif`;
+            context.fillText(text, detailX, detailY);
+            detailX += context.measureText(text).width;
+          };
+          drawDetail("待機 ");
+          drawDetail(`${item.waitSeconds}s`, timeValueColor("wait", item.waitSeconds, item.order.waitSeconds), item.waitSeconds !== item.order.waitSeconds);
+          if (item.order.effectSeconds > 0 || item.effectSeconds > 0) {
+            drawDetail(" / 効果 ");
+            drawDetail(`${item.effectSeconds}s`, timeValueColor("effect", item.effectSeconds, item.order.effectSeconds), item.effectSeconds !== item.order.effectSeconds);
+          }
         }
 
         context.textAlign = "right";
@@ -327,7 +330,7 @@ export default function Home() {
       <header className="planner-header">
         <div className="timeline-actions">
           <button type="button" onClick={copyTimelineImage} disabled={calculated.length === 0}>画像コピー</button>
-          <button type="button" onClick={copyTimelineText} disabled={calculated.length === 0}>テキストコピー</button>
+          <button type="button" onClick={copyTimelineText} disabled={!calculated.some((item) => item.order.categoryId !== "wait")}>テキストコピー</button>
           <span className="copy-status" role="status" aria-live="polite">{copyStatus}</span>
         </div>
         <Link className="admin-link" href="/admin">管理画面</Link>
@@ -369,10 +372,12 @@ export default function Home() {
                     <OrderImage order={order} compact />
                     <span className="library-order-copy">
                       <strong>{order.name}</strong>
-                      <small>
-                        待機 {order.waitSeconds}s
-                        {order.effectSeconds > 0 && ` / 効果 ${order.effectSeconds}s`}
-                      </small>
+                      {order.categoryId !== "wait" && (
+                        <small>
+                          待機 {order.waitSeconds}s
+                          {order.effectSeconds > 0 && ` / 効果 ${order.effectSeconds}s`}
+                        </small>
+                      )}
                     </span>
                   </button>
                 </div>
@@ -425,12 +430,14 @@ export default function Home() {
                   <OrderImage order={item.order} />
                   <div className="timeline-copy">
                     <h3>{item.order.name}</h3>
-                    <p>
-                      待機 <span className={timeValueClass("wait", item.waitSeconds, item.order.waitSeconds)}>{item.waitSeconds}s</span>
-                      {(item.order.effectSeconds > 0 || item.effectSeconds > 0) && (
-                        <> / 効果 <span className={timeValueClass("effect", item.effectSeconds, item.order.effectSeconds)}>{item.effectSeconds}s</span></>
-                      )}
-                    </p>
+                    {item.order.categoryId !== "wait" && (
+                      <p>
+                        待機 <span className={timeValueClass("wait", item.waitSeconds, item.order.waitSeconds)}>{item.waitSeconds}s</span>
+                        {(item.order.effectSeconds > 0 || item.effectSeconds > 0) && (
+                          <> / 効果 <span className={timeValueClass("effect", item.effectSeconds, item.order.effectSeconds)}>{item.effectSeconds}s</span></>
+                        )}
+                      </p>
+                    )}
                     {item.order.categoryId !== "wait" && (
                       <small>{orderCategoryLabel(item.order.categoryId)}</small>
                     )}

@@ -3,10 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { calculateTimeline } from "../app/lib/timeline-rules.mjs";
 
-function timelineItem(orderId, waitSeconds, effectSeconds) {
+function timelineItem(orderId, waitSeconds, effectSeconds, categoryId = "other") {
   return {
     instanceId: orderId,
-    order: { orderId, waitSeconds, effectSeconds },
+    order: { orderId, waitSeconds, effectSeconds, categoryId },
   };
 }
 
@@ -33,6 +33,10 @@ test("renders the public planner with title-only social metadata", async () => {
 test("keeps waits repeatable and exposes timeline copy actions", async () => {
   const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   assert.match(page, /repeatable = order\.categoryId === "wait"/);
+  assert.match(page, /name: "10秒待機", waitSeconds: 0, effectSeconds: 10/);
+  assert.match(page, /\.filter\(\(item\) => item\.order\.categoryId !== "wait"\)/);
+  assert.match(page, /disabled={!calculated\.some\(\(item\) => item\.order\.categoryId !== "wait"\)}/);
+  assert.match(page, /order\.categoryId !== "wait" && \(/);
   assert.match(page, /画像コピー/);
   assert.match(page, /テキストコピー/);
   assert.match(page, /navigator\.clipboard\.write\(\[new ClipboardItem/);
@@ -51,6 +55,15 @@ test("applies order timeline rules by immutable order id", () => {
   ]);
   assert.equal(accelerated[1].waitSeconds, 5);
   assert.equal(accelerated[1].effectSeconds, 90);
+
+  const acceleratedThroughWait = calculateTimeline([
+    timelineItem("16", 5, 0),
+    timelineItem("wait", 0, 10, "wait"),
+    timelineItem("2", 20, 90),
+  ]);
+  assert.equal(acceleratedThroughWait[1].waitSeconds, 0);
+  assert.equal(acceleratedThroughWait[1].effectSeconds, 10);
+  assert.equal(acceleratedThroughWait[2].waitSeconds, 5);
 
   const atThreeMinutes = calculateTimeline([
     timelineItem("wait", 720, 0),
