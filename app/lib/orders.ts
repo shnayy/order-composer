@@ -25,11 +25,21 @@ export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
 );
 
 export const DEMO_ORDERS: OrderRecord[] = [
-  { orderId: "attr-fire", imageFileName: "", name: "火属性強化", waitSeconds: 20, effectSeconds: 100, categoryId: "attribute" },
-  { orderId: "activation-up", imageFileName: "", name: "発動率上昇", waitSeconds: 10, effectSeconds: 60, categoryId: "activation" },
-  { orderId: "mp-recover", imageFileName: "", name: "MP回復", waitSeconds: 30, effectSeconds: 90, categoryId: "mp" },
-  { orderId: "shield-wall", imageFileName: "", name: "盾強化", waitSeconds: 20, effectSeconds: 120, categoryId: "shield" },
-  { orderId: "other-speed", imageFileName: "", name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
+  { orderId: "1", imageFileName: "", name: "火属性強化", waitSeconds: 20, effectSeconds: 100, categoryId: "attribute" },
+  { orderId: "2", imageFileName: "", name: "水属性強化", waitSeconds: 15, effectSeconds: 90, categoryId: "attribute" },
+  { orderId: "3", imageFileName: "", name: "風属性強化", waitSeconds: 25, effectSeconds: 110, categoryId: "attribute" },
+  { orderId: "4", imageFileName: "", name: "発動率上昇", waitSeconds: 10, effectSeconds: 60, categoryId: "activation" },
+  { orderId: "5", imageFileName: "", name: "連続発動", waitSeconds: 20, effectSeconds: 80, categoryId: "activation" },
+  { orderId: "6", imageFileName: "", name: "確定発動", waitSeconds: 30, effectSeconds: 45, categoryId: "activation" },
+  { orderId: "7", imageFileName: "", name: "MP回復", waitSeconds: 30, effectSeconds: 90, categoryId: "mp" },
+  { orderId: "8", imageFileName: "", name: "MP消費軽減", waitSeconds: 15, effectSeconds: 120, categoryId: "mp" },
+  { orderId: "9", imageFileName: "", name: "MP上限増加", waitSeconds: 20, effectSeconds: 150, categoryId: "mp" },
+  { orderId: "10", imageFileName: "", name: "盾強化", waitSeconds: 20, effectSeconds: 120, categoryId: "shield" },
+  { orderId: "11", imageFileName: "", name: "全体防御", waitSeconds: 35, effectSeconds: 90, categoryId: "shield" },
+  { orderId: "12", imageFileName: "", name: "反射障壁", waitSeconds: 25, effectSeconds: 75, categoryId: "shield" },
+  { orderId: "13", imageFileName: "", name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
+  { orderId: "14", imageFileName: "", name: "クールダウン短縮", waitSeconds: 20, effectSeconds: 100, categoryId: "other" },
+  { orderId: "15", imageFileName: "", name: "効果延長", waitSeconds: 10, effectSeconds: 80, categoryId: "other" },
 ];
 
 const API_URL = process.env.NEXT_PUBLIC_ORDERS_API_URL?.trim();

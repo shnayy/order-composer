@@ -23,15 +23,30 @@ type TimelineItem = {
 };
 
 type CalculatedItem = TimelineItem & {
+  startsAt: number;
   endsAt: number;
   remaining: number;
 };
+
+const WAIT_ORDERS: OrderRecord[] = [
+  { orderId: "wait-10", imageFileName: "", name: "10秒待機", waitSeconds: 10, effectSeconds: 0, categoryId: "wait" },
+  { orderId: "wait-20", imageFileName: "", name: "20秒待機", waitSeconds: 20, effectSeconds: 0, categoryId: "wait" },
+  { orderId: "wait-30", imageFileName: "", name: "30秒待機", waitSeconds: 30, effectSeconds: 0, categoryId: "wait" },
+];
 
 function formatTime(value: number) {
   const seconds = Math.max(0, Math.round(value));
   return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(
     seconds % 60,
   ).padStart(2, "0")}`;
+}
+
+function formatTimelinePoint(value: number) {
+  return value < 0 ? `-${formatTime(-value)}` : formatTime(value);
+}
+
+function formatRemaining(value: number) {
+  return value < 0 ? `-${formatTime(-value)}` : `-${formatTime(value)}-`;
 }
 
 function moveItem(items: TimelineItem[], from: number, to: number) {
@@ -59,6 +74,28 @@ function OrderImage({ order, compact = false }: { order: OrderRecord; compact?: 
   );
 }
 
+function copyWithFallback(text: string) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  textArea.select();
+  document.execCommand("copy");
+  textArea.remove();
+}
+
+function loadCanvasImage(url?: string) {
+  if (!url) return Promise.resolve<HTMLImageElement | null>(null);
+  return new Promise<HTMLImageElement | null>((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = () => resolve(null);
+    image.src = url;
+  });
+}
+
 export default function Home() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
@@ -66,7 +103,9 @@ export default function Home() {
   const [customWait, setCustomWait] = useState("45");
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState("");
   const dragRef = useRef<{ pointerId: number; index: number } | null>(null);
+  const waitSequenceRef = useRef(0);
 
   useEffect(() => {
     let active = true;
@@ -78,47 +117,156 @@ export default function Home() {
     };
   }, []);
 
-  const customSeconds = Math.max(1, Math.min(900, Number(customWait) || 1));
-  const waitOrders = useMemo<OrderRecord[]>(
-    () => [
-      { orderId: "wait-10", imageFileName: "", name: "10秒待機", waitSeconds: 10, effectSeconds: 0, categoryId: "wait" },
-      { orderId: "wait-20", imageFileName: "", name: "20秒待機", waitSeconds: 20, effectSeconds: 0, categoryId: "wait" },
-      { orderId: "wait-30", imageFileName: "", name: "30秒待機", waitSeconds: 30, effectSeconds: 0, categoryId: "wait" },
-      { orderId: "wait-custom", imageFileName: "", name: "任意待機", waitSeconds: customSeconds, effectSeconds: 0, categoryId: "wait" },
-    ],
-    [customSeconds],
-  );
+  const customSeconds = Math.max(1, Number.parseInt(customWait, 10) || 1);
 
   const visibleOrders = useMemo(() => {
     if (category === "all") return orders;
-    if (category === "wait") return waitOrders;
+    if (category === "wait") return WAIT_ORDERS;
     return orders.filter((order) => order.categoryId === category);
-  }, [category, orders, waitOrders]);
+  }, [category, orders]);
 
   const addedIds = useMemo(
-    () => new Set(timeline.map((item) => item.order.orderId)),
+    () => new Set(timeline.filter((item) => item.order.categoryId !== "wait").map((item) => item.order.orderId)),
     [timeline],
   );
 
   const calculated = useMemo(() => {
     let elapsed = 0;
     return timeline.map<CalculatedItem>((item) => {
+      const startsAt = TIMELINE_SECONDS - elapsed;
       elapsed += item.order.waitSeconds + item.order.effectSeconds;
-      return { ...item, endsAt: elapsed, remaining: TIMELINE_SECONDS - elapsed };
+      return { ...item, startsAt, endsAt: elapsed, remaining: TIMELINE_SECONDS - elapsed };
     });
   }, [timeline]);
 
   const remaining = TIMELINE_SECONDS - (calculated.at(-1)?.endsAt ?? 0);
 
   const addOrder = (order: OrderRecord) => {
+    const repeatable = order.categoryId === "wait";
+    const instanceId = repeatable
+      ? `${order.orderId}-${Date.now()}-${waitSequenceRef.current++}`
+      : order.orderId;
     setTimeline((current) => {
-      if (current.some((item) => item.order.orderId === order.orderId)) return current;
-      return [...current, { instanceId: order.orderId, order: { ...order } }];
+      if (!repeatable && current.some((item) => item.order.orderId === order.orderId)) return current;
+      return [...current, { instanceId, order: { ...order } }];
     });
   };
 
-  const removeOrder = (orderId: string) => {
-    setTimeline((current) => current.filter((item) => item.order.orderId !== orderId));
+  const addCustomWait = () => {
+    if (!customWait) return;
+    addOrder({
+      orderId: "wait-custom",
+      imageFileName: "",
+      name: `${customSeconds}秒待機`,
+      waitSeconds: customSeconds,
+      effectSeconds: 0,
+      categoryId: "wait",
+    });
+  };
+
+  const removeOrder = (instanceId: string) => {
+    setTimeline((current) => current.filter((item) => item.instanceId !== instanceId));
+  };
+
+  const showCopyStatus = (message: string) => {
+    setCopyStatus(message);
+    window.setTimeout(() => setCopyStatus(""), 2200);
+  };
+
+  const copyTimelineText = async () => {
+    const text = calculated
+      .map((item) => `${formatTimelinePoint(item.startsAt)} [${item.order.name}]`)
+      .join("\n");
+    try {
+      if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+      else copyWithFallback(text);
+      showCopyStatus("コピーしました");
+    } catch {
+      copyWithFallback(text);
+      showCopyStatus("コピーしました");
+    }
+  };
+
+  const saveTimelineImage = async () => {
+    try {
+      const width = 560;
+      const padding = 24;
+      const cardHeight = 72;
+      const gap = 27;
+      const footerHeight = 28;
+      const height = padding * 2 + calculated.length * cardHeight + Math.max(0, calculated.length - 1) * gap + footerHeight;
+      const scale = 2;
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("canvas unavailable");
+      context.scale(scale, scale);
+      context.fillStyle = "#f3f4f6";
+      context.fillRect(0, 0, width, height);
+
+      const images = await Promise.all(calculated.map((item) => loadCanvasImage(item.order.imageUrl)));
+      calculated.forEach((item, index) => {
+        const y = padding + index * (cardHeight + gap);
+        context.fillStyle = "#ffffff";
+        context.strokeStyle = "#d1d5db";
+        context.lineWidth = 1;
+        context.fillRect(padding, y, width - padding * 2, cardHeight);
+        context.strokeRect(padding + 0.5, y + 0.5, width - padding * 2 - 1, cardHeight - 1);
+
+        const imageX = padding + 10;
+        const imageY = y + 10;
+        const imageSize = 52;
+        const image = images[index];
+        if (image) {
+          const cropSize = Math.min(image.naturalWidth, image.naturalHeight);
+          const sourceX = (image.naturalWidth - cropSize) / 2;
+          const sourceY = (image.naturalHeight - cropSize) / 2;
+          context.drawImage(image, sourceX, sourceY, cropSize, cropSize, imageX, imageY, imageSize, imageSize);
+        } else {
+          context.fillStyle = "#e5e7eb";
+          context.fillRect(imageX, imageY, imageSize, imageSize);
+          context.fillStyle = "#6b7280";
+          context.font = "700 13px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
+          context.textAlign = "center";
+          context.textBaseline = "middle";
+          context.fillText(item.order.categoryId === "wait" ? `${item.order.waitSeconds}s` : item.order.name.slice(0, 1), imageX + imageSize / 2, imageY + imageSize / 2);
+        }
+
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
+        context.fillStyle = "#1f2937";
+        context.font = "700 15px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
+        context.fillText(item.order.name, imageX + imageSize + 12, y + 31);
+        context.fillStyle = "#4b5563";
+        context.font = "11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
+        const detail = `待機 ${item.order.waitSeconds}s${item.order.effectSeconds > 0 ? ` / 効果 ${item.order.effectSeconds}s` : ""}`;
+        context.fillText(detail, imageX + imageSize + 12, y + 52);
+
+        context.textAlign = "right";
+        context.fillStyle = item.remaining < 0 ? "#b42318" : "#4b5563";
+        context.font = "11px ui-monospace, SFMono-Regular, Consolas, monospace";
+        context.fillText(formatRemaining(item.remaining), width - padding, y + cardHeight + 16);
+      });
+
+      context.textAlign = "right";
+      context.fillStyle = remaining < 0 ? "#b42318" : "#4b5563";
+      context.font = "700 14px ui-monospace, SFMono-Regular, Consolas, monospace";
+      context.fillText(formatRemaining(remaining), width - padding, height - 7);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => result ? resolve(result) : reject(new Error("image unavailable")), "image/png");
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "order-composer.png";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showCopyStatus("画像を保存しました");
+    } catch {
+      showCopyStatus("画像を保存できませんでした");
+    }
   };
 
   const startDragging = (
@@ -153,6 +301,11 @@ export default function Home() {
   return (
     <main className="planner-page">
       <header className="planner-header">
+        <div className="timeline-actions">
+          <button type="button" onClick={saveTimelineImage} disabled={calculated.length === 0}>画像コピー</button>
+          <button type="button" onClick={copyTimelineText} disabled={calculated.length === 0}>テキストコピー</button>
+          <span className="copy-status" role="status" aria-live="polite">{copyStatus}</span>
+        </div>
         <Link className="admin-link" href="/admin">管理画面</Link>
       </header>
 
@@ -179,25 +332,9 @@ export default function Home() {
 
           <div className="library-list">
             {visibleOrders.map((order) => {
-              const isAdded = addedIds.has(order.orderId);
-              const isCustom = order.orderId === "wait-custom";
+              const isAdded = order.categoryId !== "wait" && addedIds.has(order.orderId);
               return (
                 <div className="library-entry" key={order.orderId}>
-                  {isCustom && (
-                    <label className="custom-wait-input">
-                      <span>秒数</span>
-                      <input
-                        type="number"
-                        min="1"
-                        max="900"
-                        inputMode="numeric"
-                        value={customWait}
-                        disabled={isAdded}
-                        onChange={(event) => setCustomWait(event.target.value)}
-                      />
-                      <span>s</span>
-                    </label>
-                  )}
                   <button
                     className={`library-order ${isAdded ? "is-added" : ""}`}
                     type="button"
@@ -217,6 +354,20 @@ export default function Home() {
                 </div>
               );
             })}
+            {category === "wait" && (
+              <form className="custom-wait-row" onSubmit={(event) => { event.preventDefault(); addCustomWait(); }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={customWait}
+                  onChange={(event) => setCustomWait(event.target.value.replace(/\D/g, ""))}
+                  aria-label="任意の待機秒数"
+                />
+                <span>秒待機</span>
+                <button type="submit" disabled={!customWait}>追加</button>
+              </form>
+            )}
           </div>
         </div>
       </aside>
@@ -224,9 +375,7 @@ export default function Home() {
       <section className={`timeline-stage ${libraryOpen ? "library-visible" : ""}`}>
         <div className="timeline-column">
           <h2>実行順</h2>
-          {calculated.length === 0 ? (
-            <div className="empty-timeline">左のリストから追加してください</div>
-          ) : (
+          {calculated.length > 0 && (
             <div className="timeline-list">
               {calculated.map((item, index) => (
                 <article
@@ -263,20 +412,20 @@ export default function Home() {
                     className="remove-order"
                     type="button"
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={() => removeOrder(item.order.orderId)}
+                    onClick={() => removeOrder(item.instanceId)}
                     aria-label={`${item.order.name}を削除`}
                   >
                     ×
                   </button>
                   <strong className={`remaining-marker ${item.remaining < 0 ? "is-over" : ""}`}>
-                    {item.remaining < 0 ? `+${formatTime(-item.remaining)}` : `-${formatTime(item.remaining)}-`}
+                    {formatRemaining(item.remaining)}
                   </strong>
                 </article>
               ))}
             </div>
           )}
           <div className={`timeline-total ${remaining < 0 ? "is-over" : ""}`}>
-            {remaining < 0 ? `+${formatTime(-remaining)}` : `-${formatTime(remaining)}-`}
+            {formatRemaining(remaining)}
           </div>
         </div>
       </section>

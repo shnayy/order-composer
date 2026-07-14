@@ -38,6 +38,14 @@ const EMPTY_FORM: FormState = {
   imageUrl: "",
 };
 
+function getNextOrderId(orders: OrderRecord[]) {
+  const highestId = orders.reduce((highest, order) => {
+    if (!/^\d+$/.test(order.orderId)) return highest;
+    return Math.max(highest, Number(order.orderId));
+  }, 0);
+  return String(highestId + 1);
+}
+
 function AdminImage({ order }: { order: OrderRecord }) {
   return order.imageUrl ? (
     <img className="admin-order-image" src={order.imageUrl} alt="" />
@@ -100,20 +108,8 @@ export default function AdminPage() {
   const submitForm = async (event: FormEvent) => {
     event.preventDefault();
     if (!form) return;
-    if (!/^[A-Za-z0-9_-]+$/.test(form.orderId)) {
-      setMessage("オーダーIDは半角英数字・ハイフン・アンダーバーで入力してください");
-      return;
-    }
     if (!form.name.trim()) {
       setMessage("オーダー名を入力してください");
-      return;
-    }
-    if (form.mode === "add" && orders.some((order) => order.orderId === form.orderId)) {
-      setMessage("同じオーダーIDが存在します");
-      return;
-    }
-    if (form.mode === "edit" && form.orderId !== form.originalId && orders.some((order) => order.orderId === form.orderId)) {
-      setMessage("変更後のオーダーIDがすでに存在します");
       return;
     }
     if (imageFile && imageFile.size > 2 * 1024 * 1024) {
@@ -126,9 +122,10 @@ export default function AdminPage() {
     try {
       const imageData = imageFile ? await fileToDataUrl(imageFile) : "";
       const extension = imageFile?.name.split(".").pop()?.toLowerCase() || "";
+      const orderId = form.mode === "add" ? getNextOrderId(orders) : form.originalId;
       const record: OrderRecord = {
-        orderId: form.orderId,
-        imageFileName: imageFile ? `${form.orderId}.${extension}` : form.imageFileName,
+        orderId,
+        imageFileName: imageFile ? `${orderId}.${extension}` : form.imageFileName,
         name: form.name.trim(),
         waitSeconds: Math.max(0, Number(form.waitSeconds) || 0),
         effectSeconds: Math.max(0, Number(form.effectSeconds) || 0),
@@ -151,6 +148,9 @@ export default function AdminPage() {
         });
         setSource("demo");
         setMessage("プレビューに反映しました。API接続前なので再読み込みすると元に戻ります");
+        setForm(null);
+        setImageFile(null);
+        setImagePreview("");
         setBusy(false);
         return;
       }
@@ -250,8 +250,12 @@ export default function AdminPage() {
             <form onSubmit={submitForm}>
               <label>
                 <span>オーダーID</span>
-                <input value={form.orderId} onChange={(event) => setForm({ ...form, orderId: event.target.value })} required />
-                <small>半角英数字・ハイフン・アンダーバー</small>
+                {form.mode === "add" ? (
+                  <div className="readonly-id-field">追加時に自動採番</div>
+                ) : (
+                  <input value={form.orderId} readOnly aria-readonly="true" />
+                )}
+                <small>連番で自動的に割り振られ、追加後は変更できません</small>
               </label>
               <label>
                 <span>画像</span>

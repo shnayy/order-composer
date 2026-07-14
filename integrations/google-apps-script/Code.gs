@@ -11,10 +11,11 @@ function doPost(event) {
   lock.waitLock(30000);
   try {
     const payload = JSON.parse(event.postData.contents || "{}");
-    if (payload.action === "save") saveOrder_(payload);
+    let orderId = "";
+    if (payload.action === "save") orderId = saveOrder_(payload);
     else if (payload.action === "delete") deleteOrder_(payload);
     else throw new Error("Unknown action");
-    return json_({ ok: true, orders: getOrders_() });
+    return json_({ ok: true, orderId, orders: getOrders_() });
   } catch (error) {
     return json_({ ok: false, error: String(error.message || error) });
   } finally {
@@ -43,15 +44,17 @@ function getOrders_() {
 
 function saveOrder_(payload) {
   const order = payload.order || {};
-  const originalId = String(payload.originalId || order.orderId || "");
-  if (!/^[A-Za-z0-9_-]+$/.test(String(order.orderId || ""))) throw new Error("Invalid orderId");
   if (!String(order.name || "").trim()) throw new Error("Name is required");
 
   const sheet = getSheet_();
   const values = sheet.getDataRange().getValues();
-  const currentIndex = values.findIndex((row, index) => index > 0 && String(row[0]) === originalId);
-  const duplicateIndex = values.findIndex((row, index) => index > 0 && String(row[0]) === String(order.orderId));
-  if (duplicateIndex > 0 && duplicateIndex !== currentIndex) throw new Error("Duplicate orderId");
+  const isEdit = Boolean(payload.originalId);
+  const originalId = String(payload.originalId || "");
+  const currentIndex = isEdit
+    ? values.findIndex((row, index) => index > 0 && String(row[0]) === originalId)
+    : -1;
+  if (isEdit && currentIndex < 1) throw new Error("Order not found");
+  const orderId = isEdit ? String(values[currentIndex][0]) : nextOrderId_(values);
 
   const oldImageName = currentIndex > 0 ? String(values[currentIndex][1] || "") : "";
   let imageFileName = oldImageName || String(order.imageFileName || "");
@@ -60,20 +63,15 @@ function saveOrder_(payload) {
     if (oldImageName) trashFiles_(oldImageName);
     const mime = String(payload.imageMime || "image/png");
     const extension = extensionForMime_(mime);
-    imageFileName = `${order.orderId}.${extension}`;
+    imageFileName = `${orderId}.${extension}`;
     trashFiles_(imageFileName);
     const bytes = Utilities.base64Decode(String(payload.imageData).split(",").pop());
     const file = DriveApp.getFolderById(IMAGE_FOLDER_ID).createFile(Utilities.newBlob(bytes, mime, imageFileName));
     try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (_) {}
-  } else if (originalId !== String(order.orderId) && oldImageName) {
-    const extension = oldImageName.includes(".") ? oldImageName.split(".").pop() : "png";
-    imageFileName = `${order.orderId}.${extension}`;
-    const files = DriveApp.getFolderById(IMAGE_FOLDER_ID).getFilesByName(oldImageName);
-    if (files.hasNext()) files.next().setName(imageFileName);
   }
 
   const row = [[
-    String(order.orderId),
+    orderId,
     imageFileName,
     String(order.name).trim(),
     Math.max(0, Number(order.waitSeconds || 0)),
@@ -83,6 +81,15 @@ function saveOrder_(payload) {
 
   if (currentIndex > 0) sheet.getRange(currentIndex + 1, 1, 1, HEADERS.length).setValues(row);
   else sheet.appendRow(row[0]);
+  return orderId;
+}
+
+function nextOrderId_(values) {
+  const highestId = values.slice(1).reduce((highest, row) => {
+    const value = String(row[0] || "").trim();
+    return /^\d+$/.test(value) ? Math.max(highest, Number(value)) : highest;
+  }, 0);
+  return String(highestId + 1);
 }
 
 function deleteOrder_(payload) {
