@@ -11,6 +11,7 @@ import {
 import {
   CATEGORY_OPTIONS,
   OrderRecord,
+  loadCachedOrders,
   loadOrders,
   orderCategoryLabel,
 } from "./lib/orders";
@@ -112,8 +113,18 @@ function loadCanvasImage(url?: string) {
   });
 }
 
+function LoadingScreen() {
+  return (
+    <div className="loading-screen" role="status" aria-live="polite">
+      <span className="loading-spinner" aria-hidden="true" />
+      <span>読み込み中</span>
+    </div>
+  );
+}
+
 export default function Home() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
   const [category, setCategory] = useState("all");
   const [customWait, setCustomWait] = useState("45");
@@ -125,9 +136,18 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    loadOrders().then((result) => {
-      if (active) setOrders(result.orders);
-    });
+    const cachedOrders = loadCachedOrders();
+    if (cachedOrders.length > 0) {
+      setOrders(cachedOrders);
+      setLoading(false);
+    }
+    loadOrders()
+      .then((result) => {
+        if (active) setOrders(result.orders);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -326,7 +346,9 @@ export default function Home() {
   };
 
   return (
-    <main className="planner-page">
+    <>
+    {loading && <LoadingScreen />}
+    <main className="planner-page" inert={loading || undefined} aria-busy={loading}>
       <header className="planner-header">
         <div className="timeline-actions">
           <button type="button" onClick={copyTimelineImage} disabled={calculated.length === 0}>画像コピー</button>
@@ -464,5 +486,6 @@ export default function Home() {
         </div>
       </section>
     </main>
+    </>
   );
 }

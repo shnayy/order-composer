@@ -8,6 +8,7 @@ import {
   deleteOrderRemote,
   fileToDataUrl,
   isApiConfigured,
+  loadCachedOrders,
   loadOrders,
   orderCategoryLabel,
   saveOrderRemote,
@@ -47,8 +48,18 @@ function AdminImage({ order }: { order: OrderRecord }) {
   );
 }
 
+function LoadingScreen() {
+  return (
+    <div className="loading-screen" role="status" aria-live="polite">
+      <span className="loading-spinner" aria-hidden="true" />
+      <span>読み込み中</span>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -57,11 +68,20 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false);
 
   const refresh = async () => {
-    const result = await loadOrders();
-    setOrders(result.orders);
+    try {
+      const result = await loadOrders();
+      setOrders(result.orders);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
+    const cachedOrders = loadCachedOrders();
+    if (cachedOrders.length > 0) {
+      setOrders(cachedOrders);
+      setLoading(false);
+    }
     refresh();
   }, []);
 
@@ -125,13 +145,13 @@ export default function AdminPage() {
       };
 
       if (isApiConfigured()) {
-        await saveOrderRemote({
+        const result = await saveOrderRemote({
           originalId: form.originalId ?? undefined,
           order: record,
           imageData: imageData || undefined,
           imageMime: imageFile?.type || undefined,
         });
-        await refresh();
+        setOrders(result.orders);
       } else {
         setOrders((current) => {
           if (form.mode === "add") return [...current, record];
@@ -158,8 +178,8 @@ export default function AdminPage() {
     setMessage("");
     try {
       if (isApiConfigured()) {
-        await deleteOrderRemote(deleteTarget.orderId, deleteTarget.imageFileName);
-        await refresh();
+        const result = await deleteOrderRemote(deleteTarget.orderId, deleteTarget.imageFileName);
+        setOrders(result.orders);
       } else {
         setOrders((current) => current.filter((order) => order.orderId !== deleteTarget.orderId));
       }
@@ -172,7 +192,9 @@ export default function AdminPage() {
   };
 
   return (
-    <main className="admin-page">
+    <>
+    {loading && <LoadingScreen />}
+    <main className="admin-page" inert={loading || undefined} aria-busy={loading}>
       <header className="admin-header">
         <Link href="/">← タイムライン</Link>
         <button type="button" className="primary-button" onClick={openAdd}>追加</button>
@@ -284,5 +306,6 @@ export default function AdminPage() {
         </div>
       )}
     </main>
+    </>
   );
 }

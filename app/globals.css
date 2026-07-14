@@ -29,6 +29,29 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   outline-offset: 2px;
 }
 
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  background: var(--page);
+  color: #4b5563;
+  font-size: 12px;
+  text-align: center;
+}
+.loading-spinner {
+  width: 28px;
+  height: 28px;
+  margin: 0 auto;
+  border: 2px solid #cbd0d6;
+  border-top-color: #4b5563;
+  border-radius: 50%;
+  animation: loading-spin .8s linear infinite;
+}
+@keyframes loading-spin { to { transform: rotate(360deg); } }
+
 .planner-page { min-height: 100dvh; background: var(--page); }
 .planner-header {
   position: fixed;
