@@ -32,10 +32,23 @@ type CalculatedItem = TimelineItem & {
 };
 
 const WAIT_ORDERS: OrderRecord[] = [
-  { orderId: "wait-10", imageFileName: "", name: "10秒待機", waitSeconds: 10, effectSeconds: 0, categoryId: "wait" },
-  { orderId: "wait-20", imageFileName: "", name: "20秒待機", waitSeconds: 20, effectSeconds: 0, categoryId: "wait" },
-  { orderId: "wait-30", imageFileName: "", name: "30秒待機", waitSeconds: 30, effectSeconds: 0, categoryId: "wait" },
+  { orderId: -10, imageFileName: "", name: "10秒待機", waitSeconds: 10, effectSeconds: 0, categoryId: "wait" },
+  { orderId: -20, imageFileName: "", name: "20秒待機", waitSeconds: 20, effectSeconds: 0, categoryId: "wait" },
+  { orderId: -30, imageFileName: "", name: "30秒待機", waitSeconds: 30, effectSeconds: 0, categoryId: "wait" },
 ];
+
+function timeValueClass(kind: "wait" | "effect", current: number, original: number) {
+  if (current === original) return "time-value";
+  const isShorter = current < original;
+  const isRed = kind === "wait" ? isShorter : !isShorter;
+  return `time-value is-changed ${isRed ? "is-red" : "is-blue"}`;
+}
+
+function timeValueColor(kind: "wait" | "effect", current: number, original: number) {
+  if (current === original) return "#4b5563";
+  const isShorter = current < original;
+  return (kind === "wait" ? isShorter : !isShorter) ? "#b42318" : "#4b6f9f";
+}
 
 function formatTime(value: number) {
   const seconds = Math.max(0, Math.round(value));
@@ -143,7 +156,7 @@ export default function Home() {
     const repeatable = order.categoryId === "wait";
     const instanceId = repeatable
       ? `${order.orderId}-${Date.now()}-${waitSequenceRef.current++}`
-      : order.orderId;
+      : String(order.orderId);
     setTimeline((current) => {
       if (!repeatable && current.some((item) => item.order.orderId === order.orderId)) return current;
       return [...current, { instanceId, order: { ...order } }];
@@ -153,7 +166,7 @@ export default function Home() {
   const addCustomWait = () => {
     if (!customWait) return;
     addOrder({
-      orderId: "wait-custom",
+      orderId: -1,
       imageFileName: "",
       name: `${customSeconds}秒待機`,
       waitSeconds: customSeconds,
@@ -236,10 +249,20 @@ export default function Home() {
         context.fillStyle = "#1f2937";
         context.font = "700 15px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
         context.fillText(item.order.name, imageX + imageSize + 12, y + 28, cardWidth - imageSize - 34);
-        context.fillStyle = "#4b5563";
-        context.font = "11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif";
-        const detail = `待機 ${item.waitSeconds}s${item.effectSeconds > 0 ? ` / 効果 ${item.effectSeconds}s` : ""}`;
-        context.fillText(detail, imageX + imageSize + 12, y + 48);
+        let detailX = imageX + imageSize + 12;
+        const detailY = y + 48;
+        const drawDetail = (text: string, color = "#4b5563", changed = false) => {
+          context.fillStyle = color;
+          context.font = `${changed ? "700 " : ""}11px -apple-system, BlinkMacSystemFont, 'Yu Gothic', sans-serif`;
+          context.fillText(text, detailX, detailY);
+          detailX += context.measureText(text).width;
+        };
+        drawDetail("待機 ");
+        drawDetail(`${item.waitSeconds}s`, timeValueColor("wait", item.waitSeconds, item.order.waitSeconds), item.waitSeconds !== item.order.waitSeconds);
+        if (item.order.effectSeconds > 0 || item.effectSeconds > 0) {
+          drawDetail(" / 効果 ");
+          drawDetail(`${item.effectSeconds}s`, timeValueColor("effect", item.effectSeconds, item.order.effectSeconds), item.effectSeconds !== item.order.effectSeconds);
+        }
 
         context.textAlign = "right";
         context.fillStyle = item.remaining < 0 ? "#b42318" : "#4b5563";
@@ -375,8 +398,9 @@ export default function Home() {
 
       <section className={`timeline-stage ${libraryOpen ? "library-visible" : ""}`}>
         <div className="timeline-column">
-          <h2>実行順</h2>
-          {calculated.length > 0 && (
+          {calculated.length === 0 ? (
+            <div className="timeline-empty" aria-label="空のタイムライン" />
+          ) : (
             <div className="timeline-list">
               {calculated.map((item, index) => (
                 <article
@@ -402,8 +426,10 @@ export default function Home() {
                   <div className="timeline-copy">
                     <h3>{item.order.name}</h3>
                     <p>
-                      待機 {item.waitSeconds}s
-                      {item.effectSeconds > 0 && ` / 効果 ${item.effectSeconds}s`}
+                      待機 <span className={timeValueClass("wait", item.waitSeconds, item.order.waitSeconds)}>{item.waitSeconds}s</span>
+                      {(item.order.effectSeconds > 0 || item.effectSeconds > 0) && (
+                        <> / 効果 <span className={timeValueClass("effect", item.effectSeconds, item.order.effectSeconds)}>{item.effectSeconds}s</span></>
+                      )}
                     </p>
                     {item.order.categoryId !== "wait" && (
                       <small>{orderCategoryLabel(item.order.categoryId)}</small>
