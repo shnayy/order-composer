@@ -187,8 +187,7 @@ export default function Home() {
     }
   };
 
-  const saveTimelineImage = async () => {
-    try {
+  const createTimelineImage = async () => {
       const width = 560;
       const padding = 24;
       const cardHeight = 72;
@@ -254,18 +253,21 @@ export default function Home() {
       context.font = "700 14px ui-monospace, SFMono-Regular, Consolas, monospace";
       context.fillText(formatRemaining(remaining), width - padding, height - 7);
 
-      const blob = await new Promise<Blob>((resolve, reject) => {
+      return new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((result) => result ? resolve(result) : reject(new Error("image unavailable")), "image/png");
       });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "order-composer.png";
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showCopyStatus("画像を保存しました");
+  };
+
+  const copyTimelineImage = async () => {
+    try {
+      if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") {
+        throw new Error("image clipboard unavailable");
+      }
+      const image = createTimelineImage();
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": image })]);
+      showCopyStatus("画像をコピーしました");
     } catch {
-      showCopyStatus("画像を保存できませんでした");
+      showCopyStatus("画像をコピーできませんでした");
     }
   };
 
@@ -302,7 +304,7 @@ export default function Home() {
     <main className="planner-page">
       <header className="planner-header">
         <div className="timeline-actions">
-          <button type="button" onClick={saveTimelineImage} disabled={calculated.length === 0}>画像コピー</button>
+          <button type="button" onClick={copyTimelineImage} disabled={calculated.length === 0}>画像コピー</button>
           <button type="button" onClick={copyTimelineText} disabled={calculated.length === 0}>テキストコピー</button>
           <span className="copy-status" role="status" aria-live="polite">{copyStatus}</span>
         </div>
