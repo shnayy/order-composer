@@ -30,6 +30,10 @@
 
 「待機」は画面1で生成される10秒・20秒・30秒・任意秒数の専用項目なので、DBの「全部」には含まれません。
 
+## 特殊な時間処理
+
+特殊処理は不変のオーダーIDをキーに `app/lib/timeline-rules.mjs` の `ORDER_TIMELINE_RULES` へまとめています。次のオーダーの待機時間変更は `nextOrderWaitSeconds`、自身の効果時間変更は `adjustEffectSeconds` を追加するだけで拡張できます。
+
 ## ローカル実行
 
 ```bash
