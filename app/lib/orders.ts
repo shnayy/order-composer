@@ -52,6 +52,7 @@ export const DEMO_ORDERS: OrderRecord[] = [
 
 const API_URL = process.env.NEXT_PUBLIC_ORDERS_API_URL?.trim();
 const CSV_URL = process.env.NEXT_PUBLIC_ORDERS_CSV_URL?.trim();
+const ORDERS_CACHE_KEY = "order-composer:orders:v1";
 
 export function orderCategoryLabel(categoryId: string) {
   return CATEGORY_OPTIONS.find((option) => option.id === categoryId)?.label ?? "その他";
@@ -74,6 +75,37 @@ function normalizeOrder(value: Record<string, unknown>): OrderRecord | null {
   };
   if (!Number.isSafeInteger(order.orderId) || order.orderId <= 0 || !order.name || !Number.isFinite(order.waitSeconds) || !Number.isFinite(order.effectSeconds)) return null;
   return order;
+}
+
+export function loadCachedOrders(): OrderRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = JSON.parse(window.localStorage.getItem(ORDERS_CACHE_KEY) ?? "[]") as unknown;
+    if (!Array.isArray(stored)) return [];
+    return stored
+      .map((value) => normalizeOrder(value as Record<string, unknown>))
+      .filter((order): order is OrderRecord => order !== null);
+  } catch {
+    return [];
+  }
+}
+
+function cacheOrders(orders: OrderRecord[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const compactOrders = orders.map((order) => ({
+      orderId: order.orderId,
+      imageFileName: order.imageFileName,
+      name: order.name,
+      waitSeconds: order.waitSeconds,
+      effectSeconds: order.effectSeconds,
+      categoryId: order.categoryId,
+      imageUrl: order.imageUrl === sampleImageUrl(order.orderId) ? undefined : order.imageUrl,
+    }));
+    window.localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(compactOrders));
+  } catch {
+    // Storage may be unavailable in private browsing. Loading still works normally.
+  }
 }
 
 function parseCsv(text: string) {
@@ -129,16 +161,20 @@ export async function loadOrders(): Promise<{ orders: OrderRecord[]; source: Dat
       if (!response.ok) throw new Error("API response error");
       const payload = (await response.json()) as { orders?: Record<string, unknown>[] };
       const orders = (payload.orders ?? []).map(normalizeOrder).filter((order): order is OrderRecord => order !== null);
+      cacheOrders(orders);
       return { orders, source: "apps-script" };
     }
     if (CSV_URL) {
       const response = await fetch(CSV_URL, { cache: "no-store" });
       if (!response.ok) throw new Error("CSV response error");
-      return { orders: ordersFromCsv(await response.text()), source: "csv" };
+      const orders = ordersFromCsv(await response.text());
+      cacheOrders(orders);
+      return { orders, source: "csv" };
     }
     return { orders: DEMO_ORDERS, source: "demo" };
   } catch {
-    return { orders: DEMO_ORDERS, source: "error" };
+    const cachedOrders = loadCachedOrders();
+    return { orders: cachedOrders.length > 0 ? cachedOrders : DEMO_ORDERS, source: "error" };
   }
 }
 
@@ -151,9 +187,17 @@ async function postApi(payload: Record<string, unknown>) {
     redirect: "follow",
   });
   if (!response.ok) throw new Error("スプレッドシートの更新に失敗しました");
-  const result = (await response.json()) as { ok?: boolean; error?: string };
+  const result = (await response.json()) as {
+    ok?: boolean;
+    error?: string;
+    orders?: Record<string, unknown>[];
+  };
   if (!result.ok) throw new Error(result.error || "スプレッドシートの更新に失敗しました");
-  return result;
+  const orders = (result.orders ?? [])
+    .map(normalizeOrder)
+    .filter((order): order is OrderRecord => order !== null);
+  cacheOrders(orders);
+  return { ...result, orders };
 }
 
 export async function saveOrderRemote(payload: {
