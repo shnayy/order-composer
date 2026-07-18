@@ -14,5 +14,5 @@ orderId,imageFileName,name,waitSeconds,effectSeconds,categoryId
 13,13.png,行動加速,15,45,other
 14,14.png,クールダウン短縮,20,100,other
 15,15.png,効果延長,10,80,other
-16,16.png,戦術加速の陣,5,0,other
-17,17.png,大天光の覚醒妨害,20,90,other
+100,100.png,戦術加速の陣,5,0,other
+200,200.png,大天光の覚醒妨害,20,90,other
