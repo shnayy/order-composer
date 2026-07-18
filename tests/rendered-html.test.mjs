@@ -50,14 +50,14 @@ test("keeps waits repeatable and exposes timeline copy actions", async () => {
 
 test("applies order timeline rules by immutable order id", () => {
   const accelerated = calculateTimeline([
-    timelineItem("16", 5, 0),
+    timelineItem("100", 5, 0),
     timelineItem("2", 20, 90),
   ]);
   assert.equal(accelerated[1].waitSeconds, 5);
   assert.equal(accelerated[1].effectSeconds, 90);
 
   const acceleratedThroughWait = calculateTimeline([
-    timelineItem("16", 5, 0),
+    timelineItem("100", 5, 0),
     timelineItem("wait", 0, 10, "wait"),
     timelineItem("2", 20, 90),
   ]);
@@ -67,7 +67,7 @@ test("applies order timeline rules by immutable order id", () => {
 
   const atThreeMinutes = calculateTimeline([
     timelineItem("wait", 720, 0),
-    timelineItem("17", 20, 90),
+    timelineItem("200", 20, 90),
   ]);
   assert.equal(atThreeMinutes[1].startsAt, 180);
   assert.equal(atThreeMinutes[1].waitSeconds, 20);
@@ -75,7 +75,7 @@ test("applies order timeline rules by immutable order id", () => {
 
   const atTwoMinutes = calculateTimeline([
     timelineItem("wait", 780, 0),
-    timelineItem("17", 20, 90),
+    timelineItem("200", 20, 90),
   ]);
   assert.equal(atTwoMinutes[1].startsAt, 120);
   assert.equal(atTwoMinutes[1].waitSeconds, 20);
@@ -125,7 +125,7 @@ test("blocks interaction while loading and reuses cached orders", async () => {
     assert.match(source, /inert={loading \|\| undefined}/);
     assert.match(source, />読み込み中</);
   }
-  assert.match(orders, /order-composer:orders:v1/);
+  assert.match(orders, /order-composer:orders:v2/);
   assert.match(orders, /window\.localStorage\.setItem/);
   assert.match(orders, /cachedOrders\.length > 0 \? cachedOrders : DEMO_ORDERS/);
   assert.match(admin, /setOrders\(result\.orders\)/);
