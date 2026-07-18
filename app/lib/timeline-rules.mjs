@@ -1,10 +1,10 @@
 const LAST_TWO_MINUTES = 2 * 60;
 
 export const ORDER_TIMELINE_RULES = {
-  "16": {
+  "100": {
     nextOrderWaitSeconds: 5,
   },
-  "17": {
+  "200": {
     adjustEffectSeconds({ effectSeconds, remainingAtStart, waitSeconds }) {
       const secondsUntilLastTwoMinutes = remainingAtStart - waitSeconds - LAST_TWO_MINUTES;
       return Math.min(effectSeconds, Math.max(0, secondsUntilLastTwoMinutes));
