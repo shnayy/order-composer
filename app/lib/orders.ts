@@ -29,7 +29,7 @@ export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
 );
 
 function sampleImageUrl(orderId: number) {
-  const sampleImageId = orderId === 100 ? 16 : orderId === 200 ? 17 : orderId;
+  const sampleImageId = orderId === 700 ? 16 : orderId === 200 ? 17 : orderId;
   return SAMPLE_IMAGE_URLS[String(sampleImageId) as keyof typeof SAMPLE_IMAGE_URLS];
 }
 
@@ -49,7 +49,7 @@ export const DEMO_ORDERS: OrderRecord[] = [
   { orderId: 13, imageFileName: "13.png", imageUrl: sampleImageUrl(13), name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
   { orderId: 14, imageFileName: "14.png", imageUrl: sampleImageUrl(14), name: "クールダウン短縮", waitSeconds: 20, effectSeconds: 100, categoryId: "other" },
   { orderId: 15, imageFileName: "15.png", imageUrl: sampleImageUrl(15), name: "効果延長", waitSeconds: 10, effectSeconds: 80, categoryId: "other" },
-  { orderId: 100, imageFileName: "100.png", imageUrl: sampleImageUrl(100), name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
+  { orderId: 700, imageFileName: "700.png", imageUrl: sampleImageUrl(700), name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
   { orderId: 200, imageFileName: "200.png", imageUrl: sampleImageUrl(200), name: "大天光の覚醒妨害", waitSeconds: 20, effectSeconds: 90, categoryId: "other" },
 ];
 

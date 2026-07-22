@@ -1,7 +1,7 @@
 const LAST_TWO_MINUTES = 2 * 60;
 
 export const ORDER_TIMELINE_RULES = {
-  "100": {
+  "700": {
     nextOrderWaitSeconds: 5,
   },
   "200": {
