@@ -50,14 +50,14 @@ test("keeps waits repeatable and exposes timeline copy actions", async () => {
 
 test("applies order timeline rules by immutable order id", () => {
   const accelerated = calculateTimeline([
-    timelineItem("100", 5, 0),
+    timelineItem("700", 5, 0),
     timelineItem("2", 20, 90),
   ]);
   assert.equal(accelerated[1].waitSeconds, 5);
   assert.equal(accelerated[1].effectSeconds, 90);
 
   const acceleratedThroughWait = calculateTimeline([
-    timelineItem("100", 5, 0),
+    timelineItem("700", 5, 0),
     timelineItem("wait", 0, 10, "wait"),
     timelineItem("2", 20, 90),
   ]);
