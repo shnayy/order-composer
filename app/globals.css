@@ -167,7 +167,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 }
 .order-image--compact { width: 38px; height: 38px; font-size: 10px; }
 
-.timeline-stage { min-height: 100dvh; padding: 64px 48px 40px 34px; transition: padding-left 160ms ease; }
+.timeline-stage { min-height: 100dvh; padding: 64px 68px 40px 34px; transition: padding-left 160ms ease; }
 .timeline-stage.library-visible { padding-left: calc(min(44vw, 290px) + 20px); }
 .timeline-column { width: min(100%, 420px); margin: 0 auto; }
 .timeline-empty { width: 100%; min-height: 66px; border: 1px dashed #aeb4bc; background: transparent; }
@@ -183,12 +183,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   border: 1px solid var(--border);
   border-radius: 2px;
   background: #fff;
-  cursor: grab;
-  touch-action: none;
-  user-select: none;
 }
-.timeline-item:active, .timeline-item.is-dragging { cursor: grabbing; background: #f9fafb; opacity: .88; }
-.timeline-copy { min-width: 0; }
+.timeline-item.is-dragging { background: #f9fafb; opacity: .88; }
+.timeline-copy { min-width: 0; cursor: grab; touch-action: none; user-select: none; }
+.timeline-copy:active, .timeline-item.is-dragging .timeline-copy { cursor: grabbing; }
 .timeline-copy h3 { margin: 0; overflow: hidden; font-size: 13px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
 .timeline-copy p { margin: 4px 0 0; color: #4b5563; font-size: 9px; white-space: nowrap; }
 .time-value.is-changed { font-weight: 700; }
@@ -208,7 +206,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   font-size: 17px;
   cursor: pointer;
 }
-.remaining-marker { position: absolute; right: -42px; bottom: 3px; width: 40px; color: #4b5563; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 9px; text-align: right; white-space: nowrap; }
+.remaining-marker { position: absolute; right: -62px; bottom: 3px; width: 58px; color: #4b5563; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 9px; text-align: right; white-space: nowrap; }
 .remaining-marker.is-over, .timeline-total.is-over { color: var(--danger); }
 .timeline-total { margin-top: 12px; color: #4b5563; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 13px; font-weight: 700; text-align: right; }
 
@@ -256,7 +254,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .copy-status { position: absolute; top: 48px; left: 8px; max-width: 180px; padding: 2px 5px; background: #f9fafb; }
   .order-library { width: 43vw; }
   .timeline-stage.library-visible { padding-left: calc(43vw + 15px); }
-  .timeline-stage { padding-right: 43px; padding-left: 28px; }
+  .timeline-stage { padding-right: 63px; padding-left: 28px; }
   .library-content { padding-inline: 6px; }
   .library-order { grid-template-columns: 32px minmax(0, 1fr); gap: 5px; min-height: 42px; padding: 4px; }
   .order-image--compact { width: 32px; height: 32px; font-size: 8px; }

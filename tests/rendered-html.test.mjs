@@ -114,6 +114,21 @@ test("shows an empty timeline and highlights adjusted times", async () => {
   assert.match(css, /\.time-value\.is-blue/);
 });
 
+test("keeps timeline scrolling available outside the text drag handle", async () => {
+  const [page, css] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  const articleStart = page.indexOf("<article");
+  const copyStart = page.indexOf('<div\n                    className="timeline-copy"', articleStart);
+  assert.ok(articleStart >= 0 && copyStart > articleStart);
+  assert.doesNotMatch(page.slice(articleStart, copyStart), /onPointerDown|onPointerMove|onPointerUp|onPointerCancel/);
+  assert.match(page.slice(copyStart), /onPointerDown=\{\(event\) => startDragging/);
+  assert.match(css, /\.timeline-copy\s*\{[^}]*touch-action:\s*none/s);
+  assert.doesNotMatch(css, /\.timeline-item\s*\{[^}]*touch-action:\s*none/s);
+  assert.match(css, /\.remaining-marker\s*\{[^}]*right:\s*-62px[^}]*width:\s*58px/s);
+});
+
 test("blocks interaction while loading and reuses cached orders", async () => {
   const [page, admin, orders, css, appsScript] = await Promise.all([
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),

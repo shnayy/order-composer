@@ -437,10 +437,6 @@ export default function Home() {
                   key={item.instanceId}
                   data-order-index={index}
                   tabIndex={0}
-                  onPointerDown={(event) => startDragging(event, index, item.instanceId)}
-                  onPointerMove={dragOver}
-                  onPointerUp={stopDragging}
-                  onPointerCancel={stopDragging}
                   onKeyDown={(event) => {
                     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
                     event.preventDefault();
@@ -452,7 +448,13 @@ export default function Home() {
                   aria-label={`${item.order.name}。ドラッグまたは上下矢印キーで並べ替え`}
                 >
                   <OrderImage order={item.order} />
-                  <div className="timeline-copy">
+                  <div
+                    className="timeline-copy"
+                    onPointerDown={(event) => startDragging(event, index, item.instanceId)}
+                    onPointerMove={dragOver}
+                    onPointerUp={stopDragging}
+                    onPointerCancel={stopDragging}
+                  >
                     <h3>{item.order.name}</h3>
                     {item.order.categoryId !== "wait" && (
                       <p>
