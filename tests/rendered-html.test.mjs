@@ -94,6 +94,8 @@ test("uses immutable automatic numeric order ids", async () => {
   assert.doesNotMatch(admin, /form\.orderId/);
   assert.match(admin, /<span>カテゴリ<\/span>/);
   assert.doesNotMatch(admin, /option\.label}（{option\.id}/);
+  assert.match(admin, /\[\.\.\.orders\]\.sort\(\(left, right\) => left\.orderId - right\.orderId\)/);
+  assert.match(admin, /sortedOrders\.map\(\(order\) =>/);
   assert.match(appsScript, /nextOrderId_\(values\)/);
   assert.match(appsScript, /const orderId = isEdit \? String\(values\[currentIndex\]\[0\]\) : nextOrderId_\(values\)/);
 });

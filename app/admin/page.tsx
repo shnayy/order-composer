@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   ORDER_CATEGORY_OPTIONS,
   OrderRecord,
@@ -69,6 +69,10 @@ export default function AdminPage() {
   const [deleteTarget, setDeleteTarget] = useState<OrderRecord | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const sortedOrders = useMemo(
+    () => [...orders].sort((left, right) => left.orderId - right.orderId),
+    [orders],
+  );
 
   const refresh = async () => {
     try {
@@ -223,7 +227,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {sortedOrders.map((order) => (
                 <tr key={order.orderId}>
                   <td><AdminImage order={order} /></td>
                   <td>{order.name}</td>
