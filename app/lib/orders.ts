@@ -18,6 +18,8 @@ export const CATEGORY_OPTIONS = [
   { id: "activation", label: "発動率" },
   { id: "mp", label: "MP" },
   { id: "shield", label: "盾" },
+  { id: "buff_debuff", label: "バフ/デバフ" },
+  { id: "reorganization", label: "再編" },
   { id: "other", label: "その他" },
   { id: "wait", label: "待機" },
 ] as const;
