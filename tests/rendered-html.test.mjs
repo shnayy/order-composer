@@ -135,3 +135,10 @@ test("blocks interaction while loading and reuses cached orders", async () => {
   assert.match(appsScript, /function imageUrls_\(\)/);
   assert.doesNotMatch(appsScript, /function imageUrl_\(fileName\)/);
 });
+
+test("offers the buff/debuff and reorganization categories", async () => {
+  const orders = await readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8");
+  assert.match(orders, /\{ id: "buff_debuff", label: "バフ\/デバフ" \}/);
+  assert.match(orders, /\{ id: "reorganization", label: "再編" \}/);
+  assert.match(orders, /option\.id !== "all" && option\.id !== "wait"/);
+});
