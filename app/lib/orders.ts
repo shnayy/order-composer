@@ -11,7 +11,6 @@ export type OrderRecord = {
 export type DataSource = "apps-script" | "csv" | "fallback" | "error";
 
 export const CATEGORY_OPTIONS = [
-  { id: "all", label: "全部" },
   { id: "attribute", label: "属性" },
   { id: "activation", label: "発動率" },
   { id: "shield", label: "盾" },
@@ -22,7 +21,7 @@ export const CATEGORY_OPTIONS = [
 ] as const;
 
 export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
-  (option) => option.id !== "all" && option.id !== "wait",
+  (option) => option.id !== "wait",
 );
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");

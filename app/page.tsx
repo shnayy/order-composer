@@ -126,7 +126,7 @@ export default function Home() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeline, setTimeline] = useState<TimelineItem[]>([]);
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState("attribute");
   const [customWait, setCustomWait] = useState("45");
   const [libraryOpen, setLibraryOpen] = useState(true);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -157,9 +157,7 @@ export default function Home() {
 
   const visibleOrders = useMemo(() => {
     if (category === "wait") return WAIT_ORDERS;
-    const categoryOrders = category === "all"
-      ? orders
-      : orders.filter((order) => order.categoryId === category);
+    const categoryOrders = orders.filter((order) => order.categoryId === category);
     return [...categoryOrders].sort((left, right) => left.orderId - right.orderId);
   }, [category, orders]);
 

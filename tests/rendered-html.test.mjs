@@ -155,11 +155,17 @@ test("blocks interaction while loading and reuses cached orders", async () => {
 });
 
 test("offers the buff/debuff and reorganization categories", async () => {
-  const orders = await readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8");
+  const [page, orders] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8"),
+  ]);
   assert.match(orders, /\{ id: "buff_debuff", label: "バフ\/デバフ" \}/);
   assert.match(orders, /\{ id: "reorganization", label: "再編" \}/);
   assert.doesNotMatch(orders, /\{ id: "mp"/);
-  assert.match(orders, /option\.id !== "all" && option\.id !== "wait"/);
+  assert.doesNotMatch(orders, /\{ id: "all", label: "全部" \}/);
+  assert.match(orders, /option\.id !== "wait"/);
+  assert.match(page, /useState\("attribute"\)/);
+  assert.doesNotMatch(page, /category === "all"/);
 });
 
 test("uses the official spreadsheet data and image naming", async () => {
