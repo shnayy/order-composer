@@ -146,7 +146,8 @@ test("offers the buff/debuff and reorganization categories", async () => {
 });
 
 test("uses the official spreadsheet data and image naming", async () => {
-  const [orders, csv, appsScript] = await Promise.all([
+  const [page, orders, csv, appsScript] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8"),
     readFile(new URL("../public/orders.csv", import.meta.url), "utf8"),
     readFile(new URL("../integrations/google-apps-script/Code.gs", import.meta.url), "utf8"),
@@ -155,7 +156,10 @@ test("uses the official spreadsheet data and image naming", async () => {
   assert.match(orders, /name: "革命の御旗"/);
   assert.doesNotMatch(orders, /DEMO_ORDERS|MP回復|sampleImageUrl/);
   assert.equal(csv.trim().split(/\r?\n/).length, 65);
-  assert.match(appsScript, /1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc/);
+  assert.match(appsScript, /15OY1woERaiunJXR9kj13lvlId3ifOoBbWPL00KCzMl8/);
+  assert.doesNotMatch(appsScript, /1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc/);
+  assert.match(appsScript, /order-composer-orders-v4/);
   assert.match(appsScript, /https:\/\/lh3\.googleusercontent\.com\/d\/\$\{file\.getId\(\)\}/);
   assert.match(appsScript, /while \(usedIds\.has\(orderId\)\) orderId \+= 1/);
+  assert.match(page, /sort\(\(left, right\) => left\.orderId - right\.orderId\)/);
 });

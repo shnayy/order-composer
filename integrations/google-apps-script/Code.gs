@@ -1,7 +1,7 @@
-const SPREADSHEET_ID = "1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc";
+const SPREADSHEET_ID = "15OY1woERaiunJXR9kj13lvlId3ifOoBbWPL00KCzMl8";
 const IMAGE_FOLDER_ID = "1I2KoF104ON0q0JRslK-dVAAXklP_kLkB";
 const HEADERS = ["orderId", "imageFileName", "name", "waitSeconds", "effectSeconds", "categoryId"];
-const ORDERS_CACHE_KEY = "order-composer-orders-v3";
+const ORDERS_CACHE_KEY = "order-composer-orders-v4";
 const ORDERS_CACHE_SECONDS = 300;
 
 function doGet() {

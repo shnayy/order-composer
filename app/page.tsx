@@ -156,9 +156,11 @@ export default function Home() {
   const customSeconds = Math.max(1, Number.parseInt(customWait, 10) || 1);
 
   const visibleOrders = useMemo(() => {
-    if (category === "all") return orders;
     if (category === "wait") return WAIT_ORDERS;
-    return orders.filter((order) => order.categoryId === category);
+    const categoryOrders = category === "all"
+      ? orders
+      : orders.filter((order) => order.categoryId === category);
+    return [...categoryOrders].sort((left, right) => left.orderId - right.orderId);
   }, [category, orders]);
 
   const addedIds = useMemo(
