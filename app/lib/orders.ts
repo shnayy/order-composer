@@ -107,7 +107,7 @@ export const FALLBACK_ORDERS: OrderRecord[] = OFFICIAL_ORDERS.map((order) => ({
 
 const API_URL = process.env.NEXT_PUBLIC_ORDERS_API_URL?.trim();
 const CSV_URL = process.env.NEXT_PUBLIC_ORDERS_CSV_URL?.trim();
-const ORDERS_CACHE_KEY = "order-composer:orders:v3";
+const ORDERS_CACHE_KEY = "order-composer:orders:v4";
 
 export function orderCategoryLabel(categoryId: string) {
   return CATEGORY_OPTIONS.find((option) => option.id === categoryId)?.label ?? "その他";

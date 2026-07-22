@@ -126,7 +126,7 @@ test("blocks interaction while loading and reuses cached orders", async () => {
     assert.match(source, /inert={loading \|\| undefined}/);
     assert.match(source, />読み込み中</);
   }
-  assert.match(orders, /order-composer:orders:v3/);
+  assert.match(orders, /order-composer:orders:v4/);
   assert.match(orders, /window\.localStorage\.setItem/);
   assert.match(orders, /cachedOrders\.length > 0 \? cachedOrders : FALLBACK_ORDERS/);
   assert.match(admin, /setOrders\(result\.orders\)/);
@@ -156,5 +156,6 @@ test("uses the official spreadsheet data and image naming", async () => {
   assert.doesNotMatch(orders, /DEMO_ORDERS|MP回復|sampleImageUrl/);
   assert.equal(csv.trim().split(/\r?\n/).length, 65);
   assert.match(appsScript, /1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc/);
+  assert.match(appsScript, /https:\/\/lh3\.googleusercontent\.com\/d\/\$\{file\.getId\(\)\}/);
   assert.match(appsScript, /while \(usedIds\.has\(orderId\)\) orderId \+= 1/);
 });

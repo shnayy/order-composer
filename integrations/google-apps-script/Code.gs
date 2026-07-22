@@ -1,7 +1,7 @@
 const SPREADSHEET_ID = "1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc";
 const IMAGE_FOLDER_ID = "1I2KoF104ON0q0JRslK-dVAAXklP_kLkB";
 const HEADERS = ["orderId", "imageFileName", "name", "waitSeconds", "effectSeconds", "categoryId"];
-const ORDERS_CACHE_KEY = "order-composer-orders-v2";
+const ORDERS_CACHE_KEY = "order-composer-orders-v3";
 const ORDERS_CACHE_SECONDS = 300;
 
 function doGet() {
@@ -78,7 +78,7 @@ function imageUrls_() {
   while (files.hasNext()) {
     const file = files.next();
     const fileName = file.getName();
-    if (!urls[fileName]) urls[fileName] = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+    if (!urls[fileName]) urls[fileName] = `https://lh3.googleusercontent.com/d/${file.getId()}`;
   }
   return urls;
 }
