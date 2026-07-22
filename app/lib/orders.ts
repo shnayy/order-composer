@@ -1,5 +1,3 @@
-import { SAMPLE_IMAGE_URLS } from "./sample-images.mjs";
-
 export type OrderRecord = {
   orderId: number;
   imageFileName: string;
@@ -10,13 +8,12 @@ export type OrderRecord = {
   imageUrl?: string;
 };
 
-export type DataSource = "apps-script" | "csv" | "demo" | "error";
+export type DataSource = "apps-script" | "csv" | "fallback" | "error";
 
 export const CATEGORY_OPTIONS = [
   { id: "all", label: "全部" },
   { id: "attribute", label: "属性" },
   { id: "activation", label: "発動率" },
-  { id: "mp", label: "MP" },
   { id: "shield", label: "盾" },
   { id: "buff_debuff", label: "バフ/デバフ" },
   { id: "reorganization", label: "再編" },
@@ -28,34 +25,89 @@ export const ORDER_CATEGORY_OPTIONS = CATEGORY_OPTIONS.filter(
   (option) => option.id !== "all" && option.id !== "wait",
 );
 
-function sampleImageUrl(orderId: number) {
-  const sampleImageId = orderId === 700 ? 16 : orderId === 200 ? 17 : orderId;
-  return SAMPLE_IMAGE_URLS[String(sampleImageId) as keyof typeof SAMPLE_IMAGE_URLS];
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+
+function localImageUrl(imageFileName: string) {
+  if (!imageFileName) return undefined;
+  const path = `/order-images/${encodeURIComponent(imageFileName)}`;
+  return SITE_URL ? `${SITE_URL}${path}` : path;
 }
 
-export const DEMO_ORDERS: OrderRecord[] = [
-  { orderId: 1, imageFileName: "1.png", imageUrl: sampleImageUrl(1), name: "火属性強化", waitSeconds: 20, effectSeconds: 100, categoryId: "attribute" },
-  { orderId: 2, imageFileName: "2.png", imageUrl: sampleImageUrl(2), name: "水属性強化", waitSeconds: 15, effectSeconds: 90, categoryId: "attribute" },
-  { orderId: 3, imageFileName: "3.png", imageUrl: sampleImageUrl(3), name: "風属性強化", waitSeconds: 25, effectSeconds: 110, categoryId: "attribute" },
-  { orderId: 4, imageFileName: "4.png", imageUrl: sampleImageUrl(4), name: "発動率上昇", waitSeconds: 10, effectSeconds: 60, categoryId: "activation" },
-  { orderId: 5, imageFileName: "5.png", imageUrl: sampleImageUrl(5), name: "連続発動", waitSeconds: 20, effectSeconds: 80, categoryId: "activation" },
-  { orderId: 6, imageFileName: "6.png", imageUrl: sampleImageUrl(6), name: "確定発動", waitSeconds: 30, effectSeconds: 45, categoryId: "activation" },
-  { orderId: 7, imageFileName: "7.png", imageUrl: sampleImageUrl(7), name: "MP回復", waitSeconds: 30, effectSeconds: 90, categoryId: "mp" },
-  { orderId: 8, imageFileName: "8.png", imageUrl: sampleImageUrl(8), name: "MP消費軽減", waitSeconds: 15, effectSeconds: 120, categoryId: "mp" },
-  { orderId: 9, imageFileName: "9.png", imageUrl: sampleImageUrl(9), name: "MP上限増加", waitSeconds: 20, effectSeconds: 150, categoryId: "mp" },
-  { orderId: 10, imageFileName: "10.png", imageUrl: sampleImageUrl(10), name: "盾強化", waitSeconds: 20, effectSeconds: 120, categoryId: "shield" },
-  { orderId: 11, imageFileName: "11.png", imageUrl: sampleImageUrl(11), name: "全体防御", waitSeconds: 35, effectSeconds: 90, categoryId: "shield" },
-  { orderId: 12, imageFileName: "12.png", imageUrl: sampleImageUrl(12), name: "反射障壁", waitSeconds: 25, effectSeconds: 75, categoryId: "shield" },
-  { orderId: 13, imageFileName: "13.png", imageUrl: sampleImageUrl(13), name: "行動加速", waitSeconds: 15, effectSeconds: 45, categoryId: "other" },
-  { orderId: 14, imageFileName: "14.png", imageUrl: sampleImageUrl(14), name: "クールダウン短縮", waitSeconds: 20, effectSeconds: 100, categoryId: "other" },
-  { orderId: 15, imageFileName: "15.png", imageUrl: sampleImageUrl(15), name: "効果延長", waitSeconds: 10, effectSeconds: 80, categoryId: "other" },
-  { orderId: 700, imageFileName: "700.png", imageUrl: sampleImageUrl(700), name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
-  { orderId: 200, imageFileName: "200.png", imageUrl: sampleImageUrl(200), name: "大天光の覚醒妨害", waitSeconds: 20, effectSeconds: 90, categoryId: "other" },
-];
+const OFFICIAL_ORDERS = [
+  { orderId: 200, imageFileName: "200.png", name: "恒星の覚醒妨害", waitSeconds: 10, effectSeconds: 90, categoryId: "activation" },
+  { orderId: 201, imageFileName: "201.png", name: "覚醒の恒星", waitSeconds: 10, effectSeconds: 90, categoryId: "activation" },
+  { orderId: 401, imageFileName: "401.png", name: "煌天封界", waitSeconds: 10, effectSeconds: 110, categoryId: "shield" },
+  { orderId: 102, imageFileName: "102.png", name: "深蒼海の神裁", waitSeconds: 20, effectSeconds: 130, categoryId: "attribute" },
+  { orderId: 106, imageFileName: "106.png", name: "蒼天煌威", waitSeconds: 20, effectSeconds: 130, categoryId: "attribute" },
+  { orderId: 402, imageFileName: "402.png", name: "鳳炎封界", waitSeconds: 10, effectSeconds: 110, categoryId: "shield" },
+  { orderId: 103, imageFileName: "103.png", name: "煌天翼の咆哮", waitSeconds: 20, effectSeconds: 130, categoryId: "attribute" },
+  { orderId: 105, imageFileName: "105.png", name: "焚天赫風", waitSeconds: 10, effectSeconds: 65, categoryId: "attribute" },
+  { orderId: 403, imageFileName: "403.png", name: "蒼神封界", waitSeconds: 10, effectSeconds: 110, categoryId: "shield" },
+  { orderId: 101, imageFileName: "101.png", name: "鳳炎天舞", waitSeconds: 20, effectSeconds: 130, categoryId: "attribute" },
+  { orderId: 104, imageFileName: "104.png", name: "鳳蒼覇煌", waitSeconds: 10, effectSeconds: 65, categoryId: "attribute" },
+  { orderId: 501, imageFileName: "501.png", name: "水刃縛りの大棘蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 502, imageFileName: "502.png", name: "水鎧強化の大城壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 503, imageFileName: "503.png", name: "炎刃縛りの大棘蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 504, imageFileName: "504.png", name: "炎鎧強化の大城壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 703, imageFileName: "703.png", name: "妨げの反動", waitSeconds: 20, effectSeconds: 80, categoryId: "other" },
+  { orderId: 704, imageFileName: "704.png", name: "支えの反動", waitSeconds: 20, effectSeconds: 80, categoryId: "other" },
+  { orderId: 705, imageFileName: "705.png", name: "妨げの祝福", waitSeconds: 20, effectSeconds: 80, categoryId: "other" },
+  { orderId: 706, imageFileName: "706.png", name: "支えの祝福", waitSeconds: 20, effectSeconds: 80, categoryId: "other" },
+  { orderId: 505, imageFileName: "505.png", name: "堅硬守勢の防壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 506, imageFileName: "506.png", name: "炎鎧強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 507, imageFileName: "507.png", name: "炎鎧の鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 508, imageFileName: "508.png", name: "炎刃激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 509, imageFileName: "509.png", name: "熾烈攻勢の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 510, imageFileName: "510.png", name: "風刃縛りの大蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 511, imageFileName: "511.png", name: "風鎧強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 701, imageFileName: "701.png", name: "定めの時辰儀", waitSeconds: 30, effectSeconds: 0, categoryId: "other" },
+  { orderId: 512, imageFileName: "512.png", name: "風鎧の鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 513, imageFileName: "513.png", name: "風刃激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 700, imageFileName: "700.png", name: "戦術加速の陣", waitSeconds: 5, effectSeconds: 0, categoryId: "other" },
+  { orderId: 514, imageFileName: "514.png", name: "水刃縛りの大蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 515, imageFileName: "515.png", name: "水鎧強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 516, imageFileName: "516.png", name: "水鎧の鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 517, imageFileName: "517.png", name: "水刃激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 518, imageFileName: "518.png", name: "闇鎧の鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 519, imageFileName: "519.png", name: "闇刃縛りの大蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 520, imageFileName: "520.png", name: "光鎧の鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 521, imageFileName: "521.png", name: "光刃縛りの大蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 522, imageFileName: "522.png", name: "闇鎧強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 523, imageFileName: "523.png", name: "闇刃激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 524, imageFileName: "524.png", name: "光鎧強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 525, imageFileName: "525.png", name: "光刃激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 113, imageFileName: "113.png", name: "暗碧無双", waitSeconds: 30, effectSeconds: 120, categoryId: "attribute" },
+  { orderId: 114, imageFileName: "114.png", name: "玲瓏光艶", waitSeconds: 30, effectSeconds: 120, categoryId: "attribute" },
+  { orderId: 115, imageFileName: "115.png", name: "陰陽二律", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 601, imageFileName: "601.png", name: "後衛再編の陣", waitSeconds: 15, effectSeconds: 0, categoryId: "reorganization" },
+  { orderId: 602, imageFileName: "602.png", name: "前衛再編の陣", waitSeconds: 15, effectSeconds: 0, categoryId: "reorganization" },
+  { orderId: 107, imageFileName: "107.png", name: "光華廻風", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 108, imageFileName: "108.png", name: "天光銀波", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 109, imageFileName: "109.png", name: "光背火翼", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 110, imageFileName: "110.png", name: "黒貂威風", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 111, imageFileName: "111.png", name: "黒碑水鏡", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 112, imageFileName: "112.png", name: "暗黒業火", waitSeconds: 15, effectSeconds: 60, categoryId: "attribute" },
+  { orderId: 707, imageFileName: "707.png", name: "魔縮領域", waitSeconds: 20, effectSeconds: 80, categoryId: "other" },
+  { orderId: 708, imageFileName: "708.png", name: "広域魔導凱旋", waitSeconds: 20, effectSeconds: 0, categoryId: "other" },
+  { orderId: 603, imageFileName: "603.png", name: "広域再編の陣", waitSeconds: 30, effectSeconds: 0, categoryId: "reorganization" },
+  { orderId: 702, imageFileName: "702.png", name: "刻戻りのクロノグラフ", waitSeconds: 30, effectSeconds: 0, categoryId: "other" },
+  { orderId: 404, imageFileName: "404.png", name: "特異返しの鉄壁", waitSeconds: 30, effectSeconds: 90, categoryId: "shield" },
+  { orderId: 405, imageFileName: "405.png", name: "衝撃返しの鉄壁", waitSeconds: 30, effectSeconds: 90, categoryId: "shield" },
+  { orderId: 526, imageFileName: "526.png", name: "敵城砦鉄壁破壊", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 527, imageFileName: "527.png", name: "守勢強化の鉄壁", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 528, imageFileName: "528.png", name: "聖剣縛りの蔦", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 529, imageFileName: "529.png", name: "攻勢激化の聖剣", waitSeconds: 20, effectSeconds: 0, categoryId: "buff_debuff" },
+  { orderId: 709, imageFileName: "709.png", name: "革命の御旗", waitSeconds: 30, effectSeconds: 120, categoryId: "other" },
+] satisfies Omit<OrderRecord, "imageUrl">[];
+
+export const FALLBACK_ORDERS: OrderRecord[] = OFFICIAL_ORDERS.map((order) => ({
+  ...order,
+  imageUrl: localImageUrl(order.imageFileName),
+}));
 
 const API_URL = process.env.NEXT_PUBLIC_ORDERS_API_URL?.trim();
 const CSV_URL = process.env.NEXT_PUBLIC_ORDERS_CSV_URL?.trim();
-const ORDERS_CACHE_KEY = "order-composer:orders:v2";
+const ORDERS_CACHE_KEY = "order-composer:orders:v3";
 
 export function orderCategoryLabel(categoryId: string) {
   return CATEGORY_OPTIONS.find((option) => option.id === categoryId)?.label ?? "その他";
@@ -67,14 +119,15 @@ export function isApiConfigured() {
 
 function normalizeOrder(value: Record<string, unknown>): OrderRecord | null {
   const orderId = Number(value.orderId ?? value.id);
+  const imageFileName = String(value.imageFileName ?? "").trim();
   const order: OrderRecord = {
     orderId,
-    imageFileName: String(value.imageFileName ?? "").trim(),
+    imageFileName,
     name: String(value.name ?? "").trim(),
     waitSeconds: Number(value.waitSeconds),
     effectSeconds: Number(value.effectSeconds),
     categoryId: String(value.categoryId ?? value.category ?? "other").trim(),
-    imageUrl: sampleImageUrl(orderId) ?? (value.imageUrl ? String(value.imageUrl) : undefined),
+    imageUrl: value.imageUrl ? String(value.imageUrl) : localImageUrl(imageFileName),
   };
   if (!Number.isSafeInteger(order.orderId) || order.orderId <= 0 || !order.name || !Number.isFinite(order.waitSeconds) || !Number.isFinite(order.effectSeconds)) return null;
   return order;
@@ -103,7 +156,7 @@ function cacheOrders(orders: OrderRecord[]) {
       waitSeconds: order.waitSeconds,
       effectSeconds: order.effectSeconds,
       categoryId: order.categoryId,
-      imageUrl: order.imageUrl === sampleImageUrl(order.orderId) ? undefined : order.imageUrl,
+      imageUrl: order.imageUrl === localImageUrl(order.imageFileName) ? undefined : order.imageUrl,
     }));
     window.localStorage.setItem(ORDERS_CACHE_KEY, JSON.stringify(compactOrders));
   } catch {
@@ -174,10 +227,10 @@ export async function loadOrders(): Promise<{ orders: OrderRecord[]; source: Dat
       cacheOrders(orders);
       return { orders, source: "csv" };
     }
-    return { orders: DEMO_ORDERS, source: "demo" };
+    return { orders: FALLBACK_ORDERS, source: "fallback" };
   } catch {
     const cachedOrders = loadCachedOrders();
-    return { orders: cachedOrders.length > 0 ? cachedOrders : DEMO_ORDERS, source: "error" };
+    return { orders: cachedOrders.length > 0 ? cachedOrders : FALLBACK_ORDERS, source: "error" };
   }
 }
 

@@ -87,7 +87,8 @@ test("uses immutable automatic numeric order ids", async () => {
     readFile(new URL("../app/admin/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../integrations/google-apps-script/Code.gs", import.meta.url), "utf8"),
   ]);
-  assert.match(admin, /Math\.max\(highest, order\.orderId\)/);
+  assert.match(admin, /let orderId = 1/);
+  assert.match(admin, /while \(usedIds\.has\(orderId\)\) orderId \+= 1/);
   assert.doesNotMatch(admin, />オーダーID</);
   assert.doesNotMatch(admin, /スプレッドシート接続中|connection-state/);
   assert.doesNotMatch(admin, /form\.orderId/);
@@ -125,9 +126,9 @@ test("blocks interaction while loading and reuses cached orders", async () => {
     assert.match(source, /inert={loading \|\| undefined}/);
     assert.match(source, />読み込み中</);
   }
-  assert.match(orders, /order-composer:orders:v2/);
+  assert.match(orders, /order-composer:orders:v3/);
   assert.match(orders, /window\.localStorage\.setItem/);
-  assert.match(orders, /cachedOrders\.length > 0 \? cachedOrders : DEMO_ORDERS/);
+  assert.match(orders, /cachedOrders\.length > 0 \? cachedOrders : FALLBACK_ORDERS/);
   assert.match(admin, /setOrders\(result\.orders\)/);
   assert.doesNotMatch(admin, /await refresh\(\)/);
   assert.match(css, /\.loading-screen[^}]+position:\s*fixed[^}]+z-index:\s*1000/s);
@@ -140,5 +141,20 @@ test("offers the buff/debuff and reorganization categories", async () => {
   const orders = await readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8");
   assert.match(orders, /\{ id: "buff_debuff", label: "バフ\/デバフ" \}/);
   assert.match(orders, /\{ id: "reorganization", label: "再編" \}/);
+  assert.doesNotMatch(orders, /\{ id: "mp"/);
   assert.match(orders, /option\.id !== "all" && option\.id !== "wait"/);
+});
+
+test("uses the official spreadsheet data and image naming", async () => {
+  const [orders, csv, appsScript] = await Promise.all([
+    readFile(new URL("../app/lib/orders.ts", import.meta.url), "utf8"),
+    readFile(new URL("../public/orders.csv", import.meta.url), "utf8"),
+    readFile(new URL("../integrations/google-apps-script/Code.gs", import.meta.url), "utf8"),
+  ]);
+  assert.match(orders, /name: "恒星の覚醒妨害"/);
+  assert.match(orders, /name: "革命の御旗"/);
+  assert.doesNotMatch(orders, /DEMO_ORDERS|MP回復|sampleImageUrl/);
+  assert.equal(csv.trim().split(/\r?\n/).length, 65);
+  assert.match(appsScript, /1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc/);
+  assert.match(appsScript, /while \(usedIds\.has\(orderId\)\) orderId \+= 1/);
 });

@@ -37,7 +37,10 @@ const EMPTY_FORM: FormState = {
 };
 
 function getNextOrderId(orders: OrderRecord[]) {
-  return orders.reduce((highest, order) => Math.max(highest, order.orderId), 0) + 1;
+  const usedIds = new Set(orders.map((order) => order.orderId));
+  let orderId = 1;
+  while (usedIds.has(orderId)) orderId += 1;
+  return orderId;
 }
 
 function AdminImage({ order }: { order: OrderRecord }) {

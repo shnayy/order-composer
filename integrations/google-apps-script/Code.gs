@@ -1,7 +1,7 @@
-const SPREADSHEET_ID = "15OY1woERaiunJXR9kj13lvlId3ifOoBbWPL00KCzMl8";
+const SPREADSHEET_ID = "1HCuiyFvvpyZ6mtL6hHhHgRA-uwKdZ3L9X9FKOKebFbc";
 const IMAGE_FOLDER_ID = "1I2KoF104ON0q0JRslK-dVAAXklP_kLkB";
 const HEADERS = ["orderId", "imageFileName", "name", "waitSeconds", "effectSeconds", "categoryId"];
-const ORDERS_CACHE_KEY = "order-composer-orders-v1";
+const ORDERS_CACHE_KEY = "order-composer-orders-v2";
 const ORDERS_CACHE_SECONDS = 300;
 
 function doGet() {
@@ -126,11 +126,13 @@ function saveOrder_(payload) {
 }
 
 function nextOrderId_(values) {
-  const highestId = values.slice(1).reduce((highest, row) => {
+  const usedIds = new Set(values.slice(1).map(row => {
     const value = String(row[0] || "").trim();
-    return /^\d+$/.test(value) ? Math.max(highest, Number(value)) : highest;
-  }, 0);
-  return String(highestId + 1);
+    return /^\d+$/.test(value) ? Number(value) : 0;
+  }).filter(value => value > 0));
+  let orderId = 1;
+  while (usedIds.has(orderId)) orderId += 1;
+  return String(orderId);
 }
 
 function deleteOrder_(payload) {
@@ -155,7 +157,7 @@ function extensionForMime_(mime) {
   return extensions[mime] || "png";
 }
 
-function setupInitialImages_() {
+function setupInitialImages() {
   const files = DriveApp.getFolderById(IMAGE_FOLDER_ID).getFiles();
   while (files.hasNext()) {
     try {
